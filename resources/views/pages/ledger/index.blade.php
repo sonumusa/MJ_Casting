@@ -7,222 +7,220 @@
     .ledger-header {
         background-color: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 12px;
+        border-radius: 16px;
         padding: 24px;
         margin-bottom: 24px;
     }
 
     .summary-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 16px;
         margin-top: 24px;
     }
     .summary-box {
         background-color: var(--bg-surface);
         border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 16px;
+        border-radius: 12px;
+        padding: 18px;
         text-align: center;
     }
-    .summary-label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-    .summary-value { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
-    
-    .box-outstanding { border-bottom: 3px solid var(--error); }
-    .box-cleared { border-bottom: 3px solid var(--success); }
+    .summary-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .summary-value { font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
 
-    .header-urdu { display: block; font-size: 0.65rem; color: var(--gold-muted); margin-top: 2px; text-transform: none; letter-spacing: 0; }
-    .rp-amt-col { background-color: rgba(56, 189, 248, 0.05); }
+    .box-outstanding { border-left: 4px solid var(--error); }
+    .box-cleared { border-left: 4px solid var(--success); }
 
     .filter-row {
-        display: flex;
-        gap: 16px;
-        align-items: flex-end;
-        margin-bottom: 24px;
-        padding: 16px;
         background-color: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 12px;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 16px;
+        align-items: end;
+        flex-wrap: wrap;
     }
 
-    .totals-row {
-        background-color: rgba(218, 165, 32, 0.05) !important;
-        font-weight: 700;
+    .table-container {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        overflow: hidden;
     }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { 
+        background: rgba(218,165,32,0.08); 
+        padding: 16px 12px; 
+        text-align: left; 
+        font-size: 0.75rem; 
+        text-transform: uppercase; 
+        letter-spacing: 0.6px;
+        border-bottom: 2px solid var(--border-color);
+    }
+    td { padding: 16px 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+    tr:hover { background-color: rgba(218,165,32,0.04); }
     .totals-row td {
-        color: var(--gold-primary);
-        border-top: 2px solid var(--border-color);
+        background: rgba(218,165,32,0.1) !important;
+        font-weight: 700;
+        border-top: 3px solid var(--gold-primary);
     }
-
-    @media (max-width: 768px) {
-        .summary-grid { grid-template-columns: repeat(2, 1fr); }
-        .filter-row { flex-direction: column; align-items: stretch; }
+    .receipt-row {
+        background-color: rgba(16,185,129,0.08) !important;
     }
 </style>
 @endsection
 
 @section('content')
-    <div class="page-header" style="margin-bottom: 24px;">
+    <div class="page-header">
         <div class="page-title-group">
-            <h1>Customer Ledger</h1>
-            <p class="font-urdu">گاہک کھاتہ</p>
+            <h1>Party Ledger <span class="font-urdu">کھاتہ</span></h1>
         </div>
     </div>
 
-    <!-- Customer Selector -->
     <div class="ledger-header">
-        <form method="GET" action="{{ route('ledger.index') }}" id="ledger-form">
-            <div class="form-group" style="margin-bottom: 0;">
-                <label>Select Customer <span class="font-urdu">گاہک منتخب کریں</span></label>
-                <div style="display: flex; gap: 12px;">
-                    <select name="customer_id" class="filter-control" style="flex: 1;" onchange="this.form.submit()">
-                        <option value="">Choose a customer...</option>
-                        @foreach($customers as $customer)
-                            <option value="{{ $customer->id }}" {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
-                                {{ $customer->name }}
+        <form method="GET" action="{{ route('ledger.index') }}">
+            <div style="display: flex; gap: 12px; align-items: end;">
+                <div style="flex: 1;">
+                    <label>Select Party <span class="font-urdu">پارٹی منتخب کریں</span></label>
+                    <select name="customer_id" class="filter-control" onchange="this.form.submit()">
+                        <option value="">Select Party...</option>
+                        @foreach($customers as $c)
+                            <option value="{{ $c->id }}" {{ request('customer_id') == $c->id ? 'selected' : '' }}>
+                                {{ $c->name }} ({{ ucfirst($c->party_type) }})
                             </option>
                         @endforeach
                     </select>
-                    <button type="submit" class="btn-gold">View Ledger</button>
                 </div>
+                <button type="submit" class="btn-gold">View Ledger</button>
             </div>
         </form>
 
         @if($selectedCustomer && $ledgerData)
-            <div style="margin-top: 20px; display: flex; align-items: center; gap: 20px;">
-                <h2 style="font-family: 'Playfair Display', serif; color: var(--text-primary); margin: 0;">{{ $selectedCustomer->name }}</h2>
-                <span class="user-role">{{ $ledgerData['invoices']->count() }} Invoices</span>
-            </div>
-            <div class="summary-grid">
-                <div class="summary-box">
-                    <div class="summary-label">Total Gold Given</div>
-                    <div class="summary-value">{{ number_format($ledgerData['total_gold_khalis'], 3) }}g</div>
-                </div>
-                <div class="summary-box">
-                    <div class="summary-label">Total Invoiced</div>
-                    <div class="summary-value">{{ number_format($ledgerData['total_invoiced'], 3) }}g</div>
-                </div>
-                <div class="summary-box">
-                    <div class="summary-label">Total Wasooli</div>
-                    <div class="summary-value">{{ number_format($ledgerData['total_wasooli'], 3) }}g</div>
-                </div>
-                <div class="summary-box {{ $ledgerData['current_balance'] > 0 ? 'box-outstanding' : 'box-cleared' }}">
-                    <div class="summary-label">Current Balance</div>
-                    <div class="summary-value" style="color: {{ $ledgerData['current_balance'] > 0 ? 'var(--error)' : 'var(--success)' }};">
-                        {{ number_format($ledgerData['current_balance'], 3) }}g
+            <div style="margin-top: 24px; padding: 20px; background: var(--bg-surface); border-radius: 12px;">
+                <h2 style="margin:0 0 8px 0; color:var(--gold-primary);">{{ $selectedCustomer->name }}</h2>
+                <p style="margin:0; color:var(--text-secondary);">Party Type: <strong>{{ ucfirst($selectedCustomer->party_type) }}</strong></p>
+                
+                <div class="summary-grid" style="margin-top: 20px;">
+                    <div class="summary-box">
+                        <div class="summary-label">Opening Balance</div>
+                        <div class="summary-value">{{ number_format($ledgerData['opening_balance'] ?? 0, 3) }}g</div>
+                    </div>
+                    <div class="summary-box">
+                        <div class="summary-label">Gold Given</div>
+                        <div class="summary-value">{{ number_format($ledgerData['total_gold_khalis'] ?? 0, 3) }}g</div>
+                    </div>
+                    <div class="summary-box">
+                        <div class="summary-label">Total Invoiced</div>
+                        <div class="summary-value">{{ number_format($ledgerData['total_invoiced'] ?? 0, 3) }}g</div>
+                    </div>
+                    <div class="summary-box {{ ($ledgerData['current_balance'] ?? 0) > 0 ? 'box-outstanding' : 'box-cleared' }}">
+                        <div class="summary-label">Current Balance</div>
+                        <div class="summary-value" style="color: {{ ($ledgerData['current_balance'] ?? 0) > 0 ? 'var(--error)' : 'var(--success)' }};">
+                            {{ number_format($ledgerData['current_balance'] ?? 0, 3) }}g
+                        </div>
                     </div>
                 </div>
             </div>
         @endif
     </div>
 
-    @if($selectedCustomer)
-        <!-- Date Filters -->
-        <form method="GET" action="{{ route('ledger.index') }}" class="filter-row">
-            <input type="hidden" name="customer_id" value="{{ $selectedCustomer->id }}">
-            <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                <label>From Date</label>
-                <input type="date" name="from_date" class="filter-control" value="{{ request('from_date') }}">
-            </div>
-            <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                <label>To Date</label>
-                <input type="date" name="to_date" class="filter-control" value="{{ request('to_date') }}">
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <button type="submit" class="btn-gold" style="height: 38px;">Apply</button>
-                <a href="{{ route('ledger.index', ['customer_id' => $selectedCustomer->id]) }}" class="btn-outline" style="height: 38px; padding: 8px 16px;">Reset</a>
-            </div>
-            <div style="flex: 1; text-align: right;">
-                <button type="button" class="btn-outline" onclick="window.print()">
-                    <i class="bi bi-printer"></i> Print Ledger
-                </button>
-            </div>
-        </form>
+    @if($selectedCustomer && $ledgerData)
+        <div class="filter-row">
+            <form method="GET" action="{{ route('ledger.index') }}">
+                <input type="hidden" name="customer_id" value="{{ $selectedCustomer->id }}">
+                <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                    <div>
+                        <label>From</label>
+                        <input type="date" name="from_date" value="{{ request('from_date') }}" class="filter-control">
+                    </div>
+                    <div>
+                        <label>To</label>
+                        <input type="date" name="to_date" value="{{ request('to_date') }}" class="filter-control">
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:flex-end;">
+                        <button type="submit" class="btn-gold">Filter</button>
+                        <a href="{{ route('ledger.index', ['customer_id' => $selectedCustomer->id]) }}" class="button-outline">Reset</a>
+                    </div>
+                </div>
+            </form>
+        </div>
 
-        <!-- Ledger Table -->
-        <div class="table-card">
-            <div style="overflow-x: auto;">
-                <table style="min-width: 1500px;">
-                    <thead>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th style="text-align:right">Gold In</th>
+                        <th style="text-align:right">Gold Out</th>
+                        <th style="text-align:right">Wasooli</th>
+                        <th style="text-align:right">Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $runningBalance = $ledgerData['opening_balance'] ?? 0;
+                    @endphp
+
+                    <!-- Opening -->
+                    <tr style="background:rgba(234,179,8,0.1);">
+                        <td colspan="6"><strong>Opening Balance</strong></td>
+                        <td class="font-mono" style="text-align:right; font-weight:700;">{{ number_format($runningBalance, 3) }}g</td>
+                    </tr>
+
+                    <!-- Receipts (Gold In) -->
+                    @foreach($ledgerData['receipts'] ?? [] as $receipt)
+                        @php
+                            $runningBalance -= $receipt->total_khalis_weight; // Customer gave gold → reduces their balance
+                        @endphp
+                        <tr class="receipt-row">
+                            <td>{{ $receipt->receipt_date->format('d/m/Y') }}</td>
+                            <td><span style="background:#4ade80;color:black;padding:2px 8px;border-radius:999px;font-size:0.7rem;">RECEIPT</span></td>
+                            <td>Gold Receipt #{{ $receipt->id }}</td>
+                            <td class="positive" style="text-align:right">+{{ number_format($receipt->total_khalis_weight, 3) }}g</td>
+                            <td style="text-align:right">-</td>
+                            <td style="text-align:right">-</td>
+                            <td class="font-mono" style="text-align:right; font-weight:600;">{{ number_format($runningBalance, 3) }}g</td>
+                        </tr>
+                    @endforeach
+
+                    <!-- Invoices -->
+                    @foreach($ledgerData['invoices'] ?? [] as $invoice)
+                        @php
+                            $runningBalance = $invoice->remaining_balance;
+                        @endphp
                         <tr>
-                            <th style="width: 100px;">Date <span class="header-urdu font-urdu">تاریخ</span></th>
-                            <th style="width: 80px;">No <span class="header-urdu font-urdu">نمبر شمار</span></th>
-                            <th style="width: 100px;">Casting <span class="header-urdu font-urdu">کاسٹنگ</span></th>
-                            <th style="width: 80px;">Waste <span class="header-urdu font-urdu">ویسٹ</span></th>
-                            <th style="width: 100px;">Total <span class="header-urdu font-urdu">ٹوٹل</span></th>
-                            <th style="width: 60px;">Ratti <span class="header-urdu font-urdu">رتی</span></th>
-                            <th style="width: 80px;">Rate (RP) <span class="header-urdu font-urdu">ریٹ</span></th>
-                            <th style="width: 100px;">Male Waste <span class="header-urdu font-urdu">میل ویسٹ</span></th>
-                            <th style="width: 120px;">Gold Khalis <span class="header-urdu font-urdu">خالص سونا</span></th>
-                            <th style="width: 120px;" class="rp-amt-col">RP Amt* <span class="header-urdu font-urdu">رقم</span></th>
-                            <th style="width: 100px;">RP Maz (w) <span class="header-urdu font-urdu">پاسہ وزن</span></th>
-                            <th style="width: 100px;">Cast Maz (w) <span class="header-urdu font-urdu">کاسٹ وزن</span></th>
-                            <th style="width: 120px;">Grand Total <span class="header-urdu font-urdu">میزان</span></th>
-                            <th style="width: 100px;">Wasooli <span class="header-urdu font-urdu">وصولی</span></th>
-                            <th style="width: 120px;">Sabqa <span class="header-urdu font-urdu">سابقہ</span></th>
-                            <th style="width: 120px;">Remaining <span class="header-urdu font-urdu">باقی</span></th>
-                            <th>Remarks <span class="header-urdu font-urdu">ریمارکس</span></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($ledgerData['invoices'] as $index => $invoice)
-                            <tr>
-                                <td style="color: var(--text-secondary);">{{ $invoice->invoice_date->format('d-m-Y') }}</td>
-                                <td class="font-mono" style="color: var(--gold-primary);" title="Invoice ID: {{ $invoice->invoice_no }}">
-                                    {{ $index + 1 }}
-                                    <div style="font-size: 0.6rem; color: var(--text-muted);">{{ $invoice->invoice_no }}</div>
-                                </td>
-                                <td class="font-mono">{{ number_format($invoice->casting_weight, 3) }}</td>
-                                <td class="font-mono">{{ number_format($invoice->waste_weight, 3) }}</td>
-                                <td class="font-mono">{{ number_format($invoice->total_weight, 3) }}</td>
-                                <td class="font-mono">{{ number_format($invoice->ratti, 2) }}</td>
-                                <td class="font-mono">{{ number_format($invoice->rp_rate, 2) }}</td>
-                                <td class="font-mono">{{ number_format($invoice->male_waste, 3) }}</td>
-                                <td class="font-mono" style="font-weight: 600; color: var(--gold-bright);">{{ number_format($invoice->gold_khalis, 3) }}</td>
-                                <td class="font-mono rp-amt-col" style="color: var(--info);">{{ number_format($invoice->rp_amount, 2) }}</td>
-                                <td class="font-mono">{{ number_format($invoice->rp_mazdori_weight, 3) }}</td>
-                                <td class="font-mono">{{ number_format($invoice->casting_mazdori_weight, 3) }}</td>
-                                <td class="font-mono" style="font-weight: 600;">{{ number_format($invoice->grand_total, 3) }}g</td>
-                                <td class="font-mono">{{ number_format($invoice->wasooli, 3) }}g</td>
-                                <td class="font-mono" style="color: var(--text-muted);">{{ number_format($invoice->previous_balance, 3) }}g</td>
-                                <td class="font-mono" style="font-weight: 600; color: {{ $invoice->remaining_balance > 0 ? 'var(--error)' : 'var(--success)' }};">
-                                    {{ number_format($invoice->remaining_balance, 3) }}g
-                                </td>
-                                <td style="font-size: 0.75rem; color: var(--text-muted);" title="{{ $invoice->remarks }}">
-                                    {{ Str::limit($invoice->remarks, 20) }}
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                    <tfoot>
-                        <tr class="totals-row">
-                            <td colspan="2">TOTALS</td>
-                            <td class="font-mono">{{ number_format($ledgerData['total_casting'], 3) }}</td>
-                            <td class="font-mono">{{ number_format($ledgerData['total_waste'], 3) }}</td>
-                            <td class="font-mono">{{ number_format($ledgerData['total_weight'], 3) }}</td>
-                            <td colspan="3"></td>
-                            <td class="font-mono" style="color: var(--gold-bright);">{{ number_format($ledgerData['total_gold_khalis'], 3) }}</td>
-                            <td colspan="3"></td>
-                            <td class="font-mono">{{ number_format($ledgerData['total_invoiced'], 3) }}g</td>
-                            <td class="font-mono">{{ number_format($ledgerData['total_wasooli'], 3) }}g</td>
-                            <td></td>
-                            <td class="font-mono" style="color: {{ $ledgerData['current_balance'] > 0 ? 'var(--error)' : 'var(--success)' }};">
-                                {{ number_format($ledgerData['current_balance'], 3) }}g
+                            <td>{{ $invoice->invoice_date->format('d/m/Y') }}</td>
+                            <td><span style="background:#eab308;color:black;padding:2px 8px;border-radius:999px;font-size:0.7rem;">INVOICE</span></td>
+                            <td>Invoice #{{ $invoice->formatted_invoice_no ?? $invoice->id }}</td>
+                            <td style="text-align:right">-</td>
+                            <td class="negative" style="text-align:right">{{ number_format($invoice->effective_gold ?? 0, 3) }}g</td>
+                            <td class="font-mono" style="text-align:right">{{ number_format($invoice->wasooli ?? 0, 3) }}g</td>
+                            <td class="font-mono" style="text-align:right; font-weight:600;color:{{ $invoice->remaining_balance > 0 ? 'var(--error)' : 'var(--success)' }};">
+                                {{ number_format($invoice->remaining_balance, 3) }}g
                             </td>
-                            <td></td>
                         </tr>
-                    </tfoot>
-                </table>
-            </div>
-            <div style="padding: 12px 24px; font-size: 0.75rem; color: var(--text-muted);">
-                * Fields marked with asterisk are for reference only and do not affect Grand Total calculations.
-            </div>
+                    @endforeach
+
+                    <tr class="totals-row">
+                        <td colspan="3"><strong>FINAL BALANCE</strong></td>
+                        <td colspan="3"></td>
+                        <td class="font-mono" style="text-align:right; font-size:1.1rem; font-weight:700; color:{{ ($ledgerData['current_balance'] ?? 0) > 0 ? 'var(--error)' : 'var(--success)' }};">
+                            {{ number_format($ledgerData['current_balance'] ?? 0, 3) }}g
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     @else
-        <div class="card" style="text-align: center; padding: 60px; color: var(--text-muted);">
-            <i class="bi bi-book" style="font-size: 4rem; opacity: 0.2; display: block; margin-bottom: 20px;"></i>
-            <h3>Please select a customer to view their ledger.</h3>
-            <p>Select a customer from the dropdown above to see transaction history and balances.</p>
+        <div style="text-align:center; padding:80px 20px; background:var(--bg-card); border-radius:16px; border:1px solid var(--border-color);">
+            <i class="bi bi-journal-text" style="font-size:4rem; opacity:0.2; display:block; margin-bottom:20px;"></i>
+            <h3>Select a party to view ledger</h3>
+            <p class="text-muted">Gold Receipts and Invoices will appear here with running balance.</p>
         </div>
     @endif
 @endsection

@@ -137,6 +137,29 @@
     .summary-item { text-align: center; }
     .summary-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; font-weight: 600; }
     .summary-value { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; }
+
+    /* Fixed New Invoice Button */
+    .btn-gold {
+        background: linear-gradient(135deg, #B8860B 0%, #DAA520 100%) !important;
+        color: white !important;
+        border: none;
+        padding: 12px 28px !important;
+        border-radius: 12px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(218, 165, 32, 0.4);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        font-size: 1rem;
+        letter-spacing: 0.025em;
+    }
+    .btn-gold:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(218, 165, 32, 0.5);
+        color: white !important;
+    }
 </style>
 @endsection
 

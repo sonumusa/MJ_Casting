@@ -39,12 +39,17 @@ class Inventory extends Model
     }
 
     /**
-     * Calculate and get closing balance
-     * Formula: Opening Balance - Given
+     * Calculate closing balance with proper formula
+     * 
+     * Closing = Opening + Total Received (Receipts + Invoice Receives) - Given (Effective Gold from Invoices)
      */
     public function calculateClosingBalance(): float
     {
-        return $this->opening_balance - $this->given_invoices;
+        $opening = (float) ($this->opening_balance ?? 0);
+        $received = (float) ($this->received ?? 0);
+        $given = (float) ($this->given_invoices ?? 0);
+        
+        return round($opening + $received - $given, 3);
     }
 
     /**
@@ -52,6 +57,6 @@ class Inventory extends Model
      */
     public function formatWeight($value): string
     {
-        return number_format($value, 3, '.', ',') . ' g';
+        return number_format((float) $value, 3, '.', ',') . ' g';
     }
 }

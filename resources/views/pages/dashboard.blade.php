@@ -5,26 +5,45 @@
 @section('extra_css')
 <style>
     .welcome-banner {
-        background: radial-gradient(circle at left, rgba(218, 165, 32, 0.2) 0%, transparent 70%), var(--bg-card);
-        border-radius: 16px;
-        padding: 32px;
+        background: radial-gradient(circle at left, rgba(218, 165, 32, 0.25) 0%, transparent 70%), var(--bg-card);
+        border-radius: 20px;
+        padding: 32px 40px;
         margin-bottom: 32px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border: 1px solid var(--border-color);
+        border: 2px solid var(--gold-primary);
+        box-shadow: var(--shadow-3);
     }
 
-    .welcome-text h1 { font-size: 2rem; color: var(--text-primary); margin-bottom: 8px; }
-    .welcome-text p { color: var(--text-secondary); font-size: 1rem; }
+    .welcome-text h1 { font-size: 2.1rem; color: var(--text-primary); margin-bottom: 6px; font-weight: 700; }
+    .welcome-text p { color: var(--gold-muted); font-size: 1.05rem; }
 
-    .gold-stock-card { text-align: right; }
-    .gold-stock-label { font-size: 0.8rem; color: var(--gold-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .gold-stock-value { font-family: 'JetBrains Mono', monospace; font-size: 2.5rem; color: var(--gold-primary); font-weight: 700; }
+    .inventory-card {
+        background: linear-gradient(135deg, #1a2521, #0f1a17);
+        border: 2px solid var(--gold-primary);
+        border-radius: 16px;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(218,165,32,0.15);
+        min-width: 260px;
+    }
+    .inventory-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: var(--gold-bright);
+        margin: 8px 0;
+    }
+    .inventory-label {
+        font-size: 0.85rem;
+        color: var(--success);
+        font-weight: 500;
+    }
 
     .stat-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
         gap: 20px;
         margin-bottom: 32px;
     }
@@ -32,237 +51,204 @@
     .stat-card {
         background-color: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 12px;
+        border-radius: 16px;
         padding: 24px;
         position: relative;
         overflow: hidden;
-        transition: transform 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .stat-card:hover { transform: translateY(-5px); }
+    .stat-card:hover { 
+        transform: translateY(-6px); 
+        box-shadow: var(--shadow-3);
+    }
     
     .stat-accent {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, var(--accent-color), transparent);
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent-color, var(--gold-primary)), transparent);
     }
 
     .stat-icon-bg {
         position: absolute;
-        top: 20px;
-        right: 20px;
-        width: 48px;
-        height: 48px;
-        background-color: rgba(var(--accent-rgb), 0.1);
-        border-radius: 12px;
+        top: 20px; right: 20px;
+        width: 56px; height: 56px;
+        background: rgba(var(--accent-rgb, 218,165,32), 0.12);
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--accent-color);
-        font-size: 1.5rem;
+        font-size: 1.6rem;
+        color: var(--accent-color, var(--gold-primary));
+        border: 1px solid rgba(var(--accent-rgb, 218,165,32), 0.3);
     }
 
     .stat-value {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 2rem;
+        font-size: 2.1rem;
         font-weight: 700;
         color: var(--text-primary);
-        margin-bottom: 4px;
+        margin: 12px 0 4px;
     }
-    .stat-label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
+    .stat-label { 
+        font-size: 0.8rem; 
+        color: var(--text-secondary); 
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
     
-    .stat-trend {
+    .type-breakdown {
         display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.75rem;
+        gap: 8px;
         margin-top: 12px;
+        flex-wrap: wrap;
     }
-    .trend-up { color: var(--success); }
-    .trend-down { color: var(--error); }
+    .type-pill {
+        font-size: 0.73rem;
+        padding: 2px 10px;
+        border-radius: 9999px;
+        font-weight: 600;
+    }
 
     .tables-grid {
         display: grid;
-        grid-template-columns: 1.5fr 1fr;
-        gap: 20px;
+        grid-template-columns: 2fr 1fr;
+        gap: 24px;
     }
 
-    .table-container {
-        background-color: var(--bg-card);
-        border: 1px solid var(--border-color);
+    .module-link {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 18px;
+        background: var(--bg-surface);
         border-radius: 12px;
-        padding: 24px;
+        text-decoration: none;
+        color: var(--text-body);
+        transition: all 0.2s;
+        border: 1px solid var(--border-color);
+        margin-bottom: 12px;
     }
-    
-    table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; padding: 12px; color: var(--gold-primary); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-color); }
-    td { padding: 14px 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-    tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02); }
-    tr:hover { background-color: rgba(255, 255, 255, 0.05); }
-
-    .customer-row { display: flex; align-items: center; gap: 12px; }
-    .customer-progress { flex: 1; height: 6px; background: var(--bg-surface); border-radius: 3px; overflow: hidden; margin: 0 12px; }
-    .progress-bar { height: 100%; background: var(--gold-primary); border-radius: 3px; }
-
-    @media (max-width: 1200px) {
-        .stat-grid { grid-template-columns: repeat(2, 1fr); }
-        .tables-grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 600px) {
-        .stat-grid { grid-template-columns: 1fr; }
-        .welcome-banner { flex-direction: column; text-align: center; gap: 24px; }
-        .gold-stock-card { text-align: center; }
+    .module-link:hover {
+        background: rgba(218,165,32,0.1);
+        border-color: var(--gold-primary);
+        transform: translateX(8px);
     }
 </style>
 @endsection
 
 @section('content')
-    <!-- Welcome Banner -->
     <div class="welcome-banner">
         <div class="welcome-text">
-            <h1>Good Morning, {{ auth()->user()->name }}</h1>
-            <p>{{ now()->format('l, jS F Y') }} | <span class="font-urdu">{{ now()->translatedFormat('l، j F Y') }}</span></p>
+            <h1>Welcome back, {{ auth()->user()->name }} 👋</h1>
+            <p>{{ now()->format('l, d F Y') }} • <span class="font-urdu">{{ now()->translatedFormat('l، j F Y') }}</span></p>
         </div>
-        <div class="gold-stock-card">
-            <div class="gold-stock-label">Total Gold Stock</div>
-            <div class="gold-stock-value">{{ number_format(\App\Models\Inventory::first()->closing_balance ?? 0, 3) }}<span style="font-size: 1rem; margin-left: 4px;">g</span></div>
+        
+        <div class="inventory-card">
+            <div class="inventory-label">TOTAL OPENING STOCK</div>
+            <div class="inventory-value">{{ number_format($stats['total_opening_stock'] ?? 0, 3) }}<span style="font-size:1.1rem; opacity:0.7;">g</span></div>
+            <small style="color:#4ade80;">Shop Gold + All Parties Opening</small>
         </div>
     </div>
 
-    <!-- Stat Cards -->
     <div class="stat-grid">
-        <!-- Card 1: Total Customers -->
-        <div class="stat-card" style="--accent-color: #3B82F6; --accent-rgb: 59, 130, 246;">
+        <div class="stat-card" style="--accent-color: #22C55E; --accent-rgb: 34, 197, 94">
             <div class="stat-accent"></div>
-            <div class="stat-icon-bg"><i class="bi bi-people"></i></div>
-            <div class="stat-value counter" data-value="{{ $stats['total_customers'] }}">0</div>
-            <div class="stat-label">Total Customers</div>
-            <div class="stat-trend trend-up"><i class="bi bi-arrow-up"></i> 12% from last month</div>
-        </div>
-
-        <!-- Card 2: Total Invoices -->
-        <div class="stat-card" style="--accent-color: #8B5CF6; --accent-rgb: 139, 92, 246;">
-            <div class="stat-accent"></div>
-            <div class="stat-icon-bg"><i class="bi bi-receipt"></i></div>
-            <div class="stat-value counter" data-value="{{ $stats['total_invoices'] }}">0</div>
+            <div class="stat-icon-bg"><i class="bi bi-receipt-cutoff"></i></div>
+            <div class="stat-value counter" data-value="{{ $stats['total_invoices'] ?? 0 }}">0</div>
             <div class="stat-label">Total Invoices</div>
-            <div class="stat-trend trend-up"><i class="bi bi-arrow-up"></i> 8% from last month</div>
+            <div class="type-breakdown">
+                <span class="type-pill" style="background:#0ea5e9;color:white">Customer</span>
+                <span class="type-pill" style="background:#eab308;color:black">Dukandar</span>
+            </div>
         </div>
 
-        <!-- Card 3: Total Gold Khalis -->
-        <div class="stat-card" style="--accent-color: var(--gold-primary); --accent-rgb: 218, 165, 32;">
+        <div class="stat-card" style="--accent-color: #A78BFA; --accent-rgb: 167, 139, 250">
             <div class="stat-accent"></div>
-            <div class="stat-icon-bg"><i class="bi bi-box"></i></div>
-            <div class="stat-value"><span class="counter" data-value="{{ $stats['total_gold_khalis'] }}" data-decimals="3">0</span><span style="font-size: 1rem;">g</span></div>
-            <div class="stat-label">Total Gold Khalis</div>
-            <div class="stat-trend trend-up"><i class="bi bi-arrow-up"></i> 5% from last month</div>
+            <div class="stat-icon-bg"><i class="bi bi-box-arrow-in-down"></i></div>
+            <div class="stat-value counter" data-value="{{ $stats['total_gold_receipts'] ?? 0 }}">0</div>
+            <div class="stat-label">Gold Receipts</div>
+            <div style="color:var(--success);font-size:0.85rem;margin-top:8px;">
+                +{{ number_format($stats['total_received_khalis'] ?? 0, 2) }}g Khalis
+            </div>
         </div>
 
-        <!-- Card 4: Total RP Amount -->
-        <div class="stat-card" style="--accent-color: #10B981; --accent-rgb: 16, 185, 129;">
-            <div class="stat-accent"></div>
-            <div class="stat-icon-bg"><i class="bi bi-cash-stack"></i></div>
-            <div class="stat-value">Rs. <span class="counter" data-value="{{ $stats['total_rp_amount'] }}">0</span></div>
-            <div class="stat-label">Total RP Amount</div>
-            <div class="stat-trend trend-up"><i class="bi bi-arrow-up"></i> 15% from last month</div>
-        </div>
-
-        <!-- Card 5: Total Grand Total -->
-        <div class="stat-card" style="--accent-color: #14B8A6; --accent-rgb: 20, 184, 166;">
-            <div class="stat-accent"></div>
-            <div class="stat-icon-bg"><i class="bi bi-calculator"></i></div>
-            <div class="stat-value"><span class="counter" data-value="{{ $stats['total_grand_total'] }}" data-decimals="3">0</span>g</div>
-            <div class="stat-label">Total Grand Total</div>
-            <div class="stat-trend trend-down"><i class="bi bi-arrow-down"></i> 3% from last month</div>
-        </div>
-
-        <!-- Card 6: Total Wasooli -->
-        <div class="stat-card" style="--accent-color: #06B6D4; --accent-rgb: 6, 182, 212;">
+        <div class="stat-card" style="--accent-color: var(--gold-primary); --accent-rgb: 218, 165, 32">
             <div class="stat-accent"></div>
             <div class="stat-icon-bg"><i class="bi bi-coin"></i></div>
-            <div class="stat-value"><span class="counter" data-value="{{ $stats['total_wasooli'] }}" data-decimals="3">0</span>g</div>
-            <div class="stat-label">Total Wasooli</div>
-            <div class="stat-trend trend-up"><i class="bi bi-arrow-up"></i> 20% from last month</div>
-        </div>
-
-        <!-- Card 7: Remaining Balance -->
-        <div class="stat-card" style="--accent-color: #F59E0B; --accent-rgb: 245, 158, 11;">
-            <div class="stat-accent"></div>
-            <div class="stat-icon-bg"><i class="bi bi-balance-scale"></i></div>
-            <div class="stat-value {{ $stats['total_remaining_balance'] > 0 ? 'trend-down' : 'trend-up' }}"><span class="counter" data-value="{{ $stats['total_remaining_balance'] }}" data-decimals="3">0</span>g</div>
-            <div class="stat-label">Remaining Balance</div>
-            <div class="stat-trend {{ $stats['total_remaining_balance'] > 0 ? 'trend-down' : 'trend-up' }}">
-                <i class="bi bi-info-circle"></i> {{ $stats['total_remaining_balance'] > 0 ? 'Outstanding' : 'Cleared' }}
+            <div class="stat-value">
+                <span class="counter" data-value="{{ $stats['total_gold_khalis_given'] ?? 0 }}" data-decimals="2">0</span>g
             </div>
+            <div class="stat-label">Gold Given This Year</div>
         </div>
 
-        <!-- Card 8: Today's Invoices -->
-        <div class="stat-card" style="--accent-color: #F43F5E; --accent-rgb: 244, 63, 94;">
+        <div class="stat-card" style="--accent-color: #F43F5E; --accent-rgb: 244, 63, 94">
             <div class="stat-accent"></div>
-            <div class="stat-icon-bg"><i class="bi bi-calendar-check"></i></div>
-            <div class="stat-value counter" data-value="{{ $stats['today_invoices'] }}">0</div>
-            <div class="stat-label">Today's Invoices</div>
-            <div class="stat-trend trend-up"><i class="bi bi-clock"></i> Updated just now</div>
+            <div class="stat-icon-bg"><i class="bi bi-people"></i></div>
+            <div class="stat-value counter" data-value="{{ $stats['total_customers'] ?? 0 }}">0</div>
+            <div class="stat-label">Total Parties</div>
+            <div class="type-breakdown">
+                @foreach($stats['customers_by_type'] ?? [] as $type => $count)
+                    <span class="type-pill" style="background: {{ $type === 'customer' ? '#3b82f6' : ($type === 'dukandar' ? '#f59e0b' : '#10b981') }}; color:white;">
+                        {{ ucfirst(substr($type,0,1)) }}: {{ $count }}
+                    </span>
+                @endforeach
+            </div>
         </div>
     </div>
 
-    <!-- Tables Section -->
     <div class="tables-grid">
-        <!-- Recent Invoices -->
-        <div class="table-container">
-            <div class="chart-header">
-                <div class="chart-title">Recent Invoices</div>
-                <a href="{{ route('invoices.index') }}" class="btn-outline" style="padding: 6px 12px; font-size: 0.75rem;">View All</a>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Invoice No</th>
-                        <th>Customer</th>
-                        <th>Date</th>
-                        <th>Total</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($recentInvoices as $invoice)
+        <div class="table-container" style="background:var(--bg-card);padding:24px;border-radius:16px;border:1px solid var(--border-color);">
+            <h3 style="margin-bottom:16px;color:var(--gold-primary);">Recent Activity</h3>
+            @if(!empty($recentActivity))
+                <table style="width:100%">
+                    <thead>
                         <tr>
-                            <td class="font-mono" style="color: var(--gold-primary);">{{ $invoice->formatted_invoice_no }}</td>
-                            <td>{{ $invoice->customer->name ?? 'Unknown' }}</td>
-                            <td style="color: var(--text-secondary);">{{ $invoice->invoice_date->format('d/m/Y') }}</td>
-                            <td class="font-mono">{{ number_format($invoice->grand_total, 3) }}g</td>
-                            <td>
-                                <a href="{{ route('invoices.show', $invoice) }}" class="header-icon-btn" style="color: var(--gold-primary);">
-                                    <i class="bi bi-printer"></i>
-                                </a>
-                            </td>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Party</th>
+                            <th style="text-align:right">Amount</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($recentActivity as $item)
+                        <tr>
+                            <td>{{ $item['date'] }}</td>
+                            <td>{{ $item['type'] }}</td>
+                            <td>{{ $item['party'] }}</td>
+                            <td style="text-align:right;font-family:monospace;color:{{ $item['color'] }};">{{ $item['amount'] }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @else
+                <p class="text-muted">No recent activity.</p>
+            @endif
         </div>
 
-        <!-- Top Customers -->
-        <div class="table-container">
-            <div class="chart-header">
-                <div class="chart-title">Top Customers</div>
-            </div>
-            @php
-                $maxBalance = $topCustomers->max(fn($c) => $c->getCurrentBalance()) ?: 1;
-            @endphp
-            @foreach($topCustomers as $customer)
-                <div style="margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="font-weight: 500;">{{ $customer->name }}</span>
-                        <span class="font-mono" style="color: var(--error);">{{ number_format($customer->getCurrentBalance(), 3) }}g</span>
-                    </div>
-                    <div class="customer-progress">
-                        <div class="progress-bar" style="width: {{ min(100, ($customer->getCurrentBalance() / $maxBalance) * 100) }}%"></div>
-                    </div>
+        <div>
+            <a href="{{ route('invoices.create') }}" class="module-link">
+                <i class="bi bi-plus-circle-dotted" style="font-size:2rem;color:var(--gold-primary)"></i>
+                <div>
+                    <strong>New Invoice</strong><br>
+                    <small>Live calculation with ratti & mazdori</small>
                 </div>
-            @endforeach
+            </a>
+            <a href="{{ route('gold-receipts.create') }}" class="module-link">
+                <i class="bi bi-box-arrow-in-down" style="font-size:2rem;color:#4ade80"></i>
+                <div>
+                    <strong>New Gold Receipt</strong><br>
+                    <small>Record pure khalis received from party</small>
+                </div>
+            </a>
+            <a href="{{ route('inventory.index') }}" class="module-link">
+                <i class="bi bi-graph-up-arrow" style="font-size:2rem;color:#a5b4fc"></i>
+                <div>
+                    <strong>Inventory Report</strong><br>
+                    <small>Full movement + opening stock</small>
+                </div>
+            </a>
         </div>
     </div>
 @endsection
@@ -271,21 +257,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Counter Animation
-        const counters = document.querySelectorAll('.counter');
-        counters.forEach(counter => {
-            const target = parseFloat(counter.getAttribute('data-value'));
-            const decimals = parseInt(counter.getAttribute('data-decimals') || 0);
-            
-            gsap.to(counter, {
+        document.querySelectorAll('.counter').forEach(el => {
+            const target = parseFloat(el.getAttribute('data-value') || 0);
+            const decimals = parseInt(el.getAttribute('data-decimals') || 0);
+            gsap.to(el, {
                 innerText: target,
-                duration: 1.5,
-                ease: 'power2.out',
+                duration: 1.6,
+                ease: "power2.out",
                 onUpdate: function() {
-                    counter.innerText = parseFloat(this.targets()[0].innerText).toLocaleString(undefined, {
-                        minimumFractionDigits: decimals,
-                        maximumFractionDigits: decimals
-                    });
+                    this.targets()[0].innerText = Number(this.targets()[0].innerText).toFixed(decimals);
                 }
             });
         });

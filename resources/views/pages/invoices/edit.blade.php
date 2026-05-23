@@ -731,7 +731,8 @@
             const prevBalanceInput = document.getElementById('previous_balance');
             if (customerId) {
                 try {
-                    const response = await fetch(`/customers/${customerId}/last-balance`);
+                    const baseUrl = '{{ url("") }}';
+                    const response = await fetch(`${baseUrl}/customers/${customerId}/last-balance`);
                     const data = await response.json();
                     const balance = parseFloat(data.balance || 0);
                     prevBalanceInput.value = balance;
