@@ -287,53 +287,61 @@
                 </div>
             </div>
 
-            <!-- Receive Rows -->
+            <!-- Mazdori -->
             <div class="form-section">
                 <div class="section-header">
-                    <i class="bi bi-box-arrow-in-down"></i>
-                    <h3>Gold Received from Party <span class="font-urdu">سونا وصول کیا</span></h3>
+                    <i class="bi bi-hammer"></i>
+                    <h3>Mazdori <span class="font-urdu">مزدوری</span></h3>
                 </div>
-                <div id="receive-rows-container">
-                    @foreach($invoice->receives as $receive)
-                        <div class="receive-row" data-index="{{ $loop->index }}">
-                            <div class="form-group">
-                                <label style="font-size:0.7rem; text-transform:none; letter-spacing:0;">Description <span class="font-urdu">تفصیل</span></label>
-                                <input type="text" name="receives[{{ $loop->index }}][description]" class="filter-control" value="{{ $receive->description }}" placeholder="e.g. Old Chain">
+                <div class="input-grid">
+                    <div class="form-group">
+                        <label>RP Mazdori <span class="font-urdu">آر پی مزدوری</span></label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="calc-input-wrapper">
+                                <input type="number" step="0.001" name="rp_mazdori_weight" id="rp_mazdori_weight" class="filter-control" placeholder="Weight" value="{{ $invoice->rp_mazdori_weight }}">
+                                <span class="unit-label">g</span>
                             </div>
-                            <div class="form-group">
-                                <label style="font-size:0.7rem; text-transform:none; letter-spacing:0;">Gross Wt <span class="font-urdu">کچا وزن</span></label>
-                                <div class="calc-input-wrapper">
-                                    <input type="number" step="0.001" name="receives[{{ $loop->index }}][gross_weight]" class="filter-control receive-gross" placeholder="0.000" value="{{ $receive->gross_weight }}">
-                                    <span class="unit-label">g</span>
-                                </div>
+                            <div class="calc-input-wrapper">
+                                <input type="number" step="0.01" name="rp_mazdori_rate" id="rp_mazdori_rate" class="filter-control" placeholder="Rate" value="{{ $invoice->rp_mazdori_rate }}">
+                                <span class="unit-label">Rs</span>
                             </div>
-                            <div class="form-group">
-                                <label style="font-size:0.7rem; text-transform:none; letter-spacing:0;">Ratti Imp <span class="font-urdu">رتی نقص</span></label>
-                                <div class="calc-input-wrapper">
-                                    <input type="number" step="0.01" name="receives[{{ $loop->index }}][ratti_impurity]" class="filter-control receive-ratti" placeholder="0" value="{{ $receive->ratti_impurity }}">
-                                    <span class="unit-label">r</span>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label style="font-size:0.7rem; text-transform:none; letter-spacing:0;">Khalis <span class="font-urdu">خالص</span></label>
-                                <div class="calc-input-wrapper">
-                                    <input type="number" step="0.001" name="receives[{{ $loop->index }}][khalis_weight]" class="filter-control receive-khalis" placeholder="0.000" value="{{ $receive->khalis_weight }}" readonly style="background: var(--bg-app); color: var(--gold-bright); font-weight: 700;">
-                                    <span class="unit-label">g</span>
-                                </div>
-                            </div>
-                            <button type="button" class="btn-remove-row" onclick="removeReceiveRow(this)" title="Remove">
-                                <i class="bi bi-trash3"></i>
-                            </button>
                         </div>
-                    @endforeach
-                </div>
-                <button type="button" class="btn-add-row" id="btn-add-receive">
-                    <i class="bi bi-plus-lg"></i> Add Receive Row (نئی لائن)
-                </button>
-                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-color);">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">Total Received Khalis:</span>
-                        <span class="font-mono" id="display-total-received" style="font-size: 1.1rem; color: var(--success); font-weight: 700;">{{ number_format($invoice->total_received_khalis, 3) }}g</span>
+                        <div id="rp-mazdori-amount-display" style="margin-top: 10px; font-size: 0.78rem; color: var(--info); font-weight: 500;">
+                            Amount*: Rs. {{ number_format($invoice->rp_mazdori_amount, 2) }}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Casting Mazdori <span class="font-urdu">کاسٹنگ مزدوری</span></label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="calc-input-wrapper">
+                                <input type="number" step="0.001" name="casting_mazdori_weight" id="casting_mazdori_weight" class="filter-control" placeholder="Weight" value="{{ $invoice->casting_mazdori_weight }}">
+                                <span class="unit-label">g</span>
+                            </div>
+                            <div class="calc-input-wrapper">
+                                <input type="number" step="0.01" name="casting_mazdori_rate" id="casting_mazdori_rate" class="filter-control" placeholder="Rate" value="{{ $invoice->casting_mazdori_rate }}">
+                                <span class="unit-label">Rs</span>
+                            </div>
+                        </div>
+                        <div id="casting-mazdori-amount-display" style="margin-top: 10px; font-size: 0.78rem; color: var(--info); font-weight: 500;">
+                            Amount*: Rs. {{ number_format($invoice->casting_mazdori_amount, 2) }}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="rp_rate">RP Rate (Rs. per gram) <span class="font-urdu">ریٹ فی گرام</span></label>
+                        <input type="number" step="0.01" name="rp_rate" id="rp_rate" class="filter-control" value="{{ $invoice->rp_rate }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="wasooli">
+                            <span>Wasooli <span class="font-urdu">وصولی</span></span>
+                            <button type="button" id="apply-balance-btn" class="button-outline" style="padding: 4px 10px; font-size: 0.7rem;">
+                                Apply Previous Balance <span class="font-urdu">سابقہ بقایا لگائیں</span>
+                            </button>
+                        </label>
+                        <input type="number" step="0.001" name="wasooli" id="wasooli" class="filter-control" placeholder="0.000" value="{{ $invoice->wasooli }}">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="remarks">Remarks <span class="font-urdu">ریمارکس</span></label>
+                        <textarea name="remarks" id="remarks" class="filter-control" rows="2" placeholder="Any additional notes...">{{ $invoice->remarks }}</textarea>
                     </div>
                 </div>
             </div>
@@ -415,61 +423,53 @@
                 </div>
             </div>
 
-            <!-- Mazdori -->
+            <!-- Receive Rows / Gold Received from Party -->
             <div class="form-section">
                 <div class="section-header">
-                    <i class="bi bi-hammer"></i>
-                    <h3>Mazdori <span class="font-urdu">مزدوری</span></h3>
+                    <i class="bi bi-box-arrow-in-down"></i>
+                    <h3>Gold Received from Party <span class="font-urdu">سونا وصول کیا</span></h3>
                 </div>
-                <div class="input-grid">
-                    <div class="form-group">
-                        <label>RP Mazdori <span class="font-urdu">آر پی مزدوری</span></label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div class="calc-input-wrapper">
-                                <input type="number" step="0.001" name="rp_mazdori_weight" id="rp_mazdori_weight" class="filter-control" placeholder="Weight" value="{{ $invoice->rp_mazdori_weight }}">
-                                <span class="unit-label">g</span>
+                <div id="receive-rows-container">
+                    @foreach($invoice->receives as $receive)
+                        <div class="receive-row" data-index="{{ $loop->index }}">
+                            <div class="form-group">
+                                <label style="font-size:0.7rem; text-transform:none; letter-spacing:0;">Description <span class="font-urdu">تفصیل</span></label>
+                                <input type="text" name="receives[{{ $loop->index }}][description]" class="filter-control" value="{{ $receive->description }}" placeholder="e.g. Old Chain">
                             </div>
-                            <div class="calc-input-wrapper">
-                                <input type="number" step="0.01" name="rp_mazdori_rate" id="rp_mazdori_rate" class="filter-control" placeholder="Rate" value="{{ $invoice->rp_mazdori_rate }}">
-                                <span class="unit-label">Rs</span>
+                            <div class="form-group">
+                                <label style="font-size:0.7rem; text-transform:none; letter-spacing:0;">Gross Wt <span class="font-urdu">کچا وزن</span></label>
+                                <div class="calc-input-wrapper">
+                                    <input type="number" step="0.001" name="receives[{{ $loop->index }}][gross_weight]" class="filter-control receive-gross" placeholder="0.000" value="{{ $receive->gross_weight }}">
+                                    <span class="unit-label">g</span>
+                                </div>
                             </div>
-                        </div>
-                        <div id="rp-mazdori-amount-display" style="margin-top: 10px; font-size: 0.78rem; color: var(--info); font-weight: 500;">
-                            Amount*: Rs. {{ number_format($invoice->rp_mazdori_amount, 2) }}
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Casting Mazdori <span class="font-urdu">کاسٹنگ مزدوری</span></label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div class="calc-input-wrapper">
-                                <input type="number" step="0.001" name="casting_mazdori_weight" id="casting_mazdori_weight" class="filter-control" placeholder="Weight" value="{{ $invoice->casting_mazdori_weight }}">
-                                <span class="unit-label">g</span>
+                            <div class="form-group">
+                                <label style="font-size:0.7rem; text-transform:none; letter-spacing:0;">Ratti Imp <span class="font-urdu">رتی نقص</span></label>
+                                <div class="calc-input-wrapper">
+                                    <input type="number" step="0.01" name="receives[{{ $loop->index }}][ratti_impurity]" class="filter-control receive-ratti" placeholder="0" value="{{ $receive->ratti_impurity }}">
+                                    <span class="unit-label">r</span>
+                                </div>
                             </div>
-                            <div class="calc-input-wrapper">
-                                <input type="number" step="0.01" name="casting_mazdori_rate" id="casting_mazdori_rate" class="filter-control" placeholder="Rate" value="{{ $invoice->casting_mazdori_rate }}">
-                                <span class="unit-label">Rs</span>
+                            <div class="form-group">
+                                <label style="font-size:0.7rem; text-transform:none; letter-spacing:0;">Khalis <span class="font-urdu">خالص</span></label>
+                                <div class="calc-input-wrapper">
+                                    <input type="number" step="0.001" name="receives[{{ $loop->index }}][khalis_weight]" class="filter-control receive-khalis" placeholder="0.000" value="{{ $receive->khalis_weight }}" readonly style="background: var(--bg-app); color: var(--gold-bright); font-weight: 700;">
+                                    <span class="unit-label">g</span>
+                                </div>
                             </div>
-                        </div>
-                        <div id="casting-mazdori-amount-display" style="margin-top: 10px; font-size: 0.78rem; color: var(--info); font-weight: 500;">
-                            Amount*: Rs. {{ number_format($invoice->casting_mazdori_amount, 2) }}
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="rp_rate">RP Rate (Rs. per gram) <span class="font-urdu">ریٹ فی گرام</span></label>
-                        <input type="number" step="0.01" name="rp_rate" id="rp_rate" class="filter-control" value="{{ $invoice->rp_rate }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="wasooli">
-                            <span>Wasooli <span class="font-urdu">وصولی</span></span>
-                            <button type="button" id="apply-balance-btn" class="button-outline" style="padding: 4px 10px; font-size: 0.7rem;">
-                                Apply Previous Balance <span class="font-urdu">سابقہ بقایا لگائیں</span>
+                            <button type="button" class="btn-remove-row" onclick="removeReceiveRow(this)" title="Remove">
+                                <i class="bi bi-trash3"></i>
                             </button>
-                        </label>
-                        <input type="number" step="0.001" name="wasooli" id="wasooli" class="filter-control" placeholder="0.000" value="{{ $invoice->wasooli }}">
-                    </div>
-                    <div class="form-group full-width">
-                        <label for="remarks">Remarks <span class="font-urdu">ریمارکس</span></label>
-                        <textarea name="remarks" id="remarks" class="filter-control" rows="2" placeholder="Any additional notes...">{{ $invoice->remarks }}</textarea>
+                        </div>
+                    @endforeach
+                </div>
+                <button type="button" class="btn-add-row" id="btn-add-receive">
+                    <i class="bi bi-plus-lg"></i> Add Receive Row (نئی لائن)
+                </button>
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">Total Received Khalis:</span>
+                        <span class="font-mono" id="display-total-received" style="font-size: 1.1rem; color: var(--success); font-weight: 700;">{{ number_format($invoice->total_received_khalis, 3) }}g</span>
                     </div>
                 </div>
             </div>

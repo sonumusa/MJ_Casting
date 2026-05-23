@@ -27,13 +27,13 @@ class GoldCalculationService
 
         if (!empty($input['waste_auto'])) {
             $wasteRate = $this->parseDecimal(
-                $input['waste_rate'] ?? \App\Models\Setting::getSetting('default_waste_rate', 0)
+                $input['ratti_rate'] ?? \App\Models\Setting::getSetting('default_ratti_rate', 0)
             );
             $wasteWeight = round($castingWeight / 10 * $wasteRate, 3);
         }
 
-        // Step 1: total_weight = round(casting_weight + waste_weight, 3)
-        $totalWeight = round($castingWeight + $wasteWeight, 3);
+        // Step 1: total_weight is the gold remaining after waste deduction
+        $totalWeight = round($castingWeight - $wasteWeight, 3);
 
         // Step 2: ratti auto-calculation
         $ratti = $this->parseDecimal($input['ratti'] ?? 0);
@@ -73,8 +73,8 @@ class GoldCalculationService
         // Step 8: effective_gold = round(gold_khalis + rp_mazdori_weight + casting_mazdori_weight, 3)
         $effectiveGold = round($goldKhalis + $rpMazdoriWeight + $castingMazdoriWeight, 3);
 
-        // Step 9: grand_total = round(effective_gold × rp_rate, 2) — monetary total
-        $grandTotal = round($effectiveGold * $rpRate, 2);
+        // Step 9: grand_total = round(effective_gold, 3) — grams total out of inventory
+        $grandTotal = round($effectiveGold, 3);
 
         // Step 10: remaining_balance = round(previous_balance + grand_total - wasooli - total_received_khalis, 3)
         // If party gives gold (received), it reduces their balance

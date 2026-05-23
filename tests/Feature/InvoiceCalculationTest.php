@@ -16,6 +16,7 @@ class InvoiceCalculationTest extends TestCase
         $result = $service->calculate([
             'casting_weight' => 2.5,
             'waste_weight' => 0.5,
+            'waste_auto' => 1,
             'ratti' => 2.0,
             'ratti_rate' => 0.5,
             'rp_rate' => 65620,
@@ -23,13 +24,17 @@ class InvoiceCalculationTest extends TestCase
             'rp_mazdori_rate' => 5000,
             'casting_mazdori_weight' => 0.15,
             'casting_mazdori_rate' => 5000,
+            'male_waste_auto' => 1,
             'previous_balance' => 0,
             'wasooli' => 0,
         ]);
 
-        // Grand total should be effective gold (grams) × rp_rate (monetary)
-        $expectedGrand = round($result['effective_gold'] * 65620, 2);
-        $this->assertSame($expectedGrand, $result['grand_total']);
+        $this->assertSame(0.125, $result['waste_weight']);
+        $this->assertSame(2.375, $result['total_weight']);
+        $this->assertSame(0.049, $result['male_waste']);
+        $this->assertSame(2.326, $result['gold_khalis']);
+        $this->assertSame(2.596, $result['effective_gold']);
+        $this->assertSame(2.596, $result['grand_total']);
     }
 
     public function test_mazdori_rate_changes_do_not_affect_grand_total(): void

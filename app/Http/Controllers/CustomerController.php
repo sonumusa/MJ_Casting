@@ -90,14 +90,35 @@ class CustomerController extends Controller
 
     public function lastBalance(Customer $customer)
     {
-        $lastInvoice = $customer->invoices()
+        // Get all active invoices up to today
+        $invoices = $customer->invoices()
             ->where('status', 'active')
+            ->whereDate('invoice_date', '<=', now()->toDateString())
             ->latest('invoice_date')
             ->latest('id')
-            ->first();
+            ->get();
+
+        // Get all receipts up to today
+        $receipts = $customer->goldReceipts()
+            ->whereDate('receipt_date', '<=', now()->toDateString())
+            ->latest('receipt_date')
+            ->latest('id')
+            ->get();
+
+        // Calculate running balance as of today
+        $balance = $customer->opening_balance ?? 0;
+        
+        // Add invoices
+        if ($invoices->isNotEmpty()) {
+            $balance = $invoices->first()->remaining_balance ?? $balance;
+        }
+        
+        // Subtract gold receipts from today's perspective
+        $totalReceipts = $receipts->sum('total_khalis_weight');
+        $balance -= $totalReceipts;
 
         return response()->json([
-            'balance' => $lastInvoice?->remaining_balance ?? $customer->opening_balance,
+            'balance' => round($balance, 3),
             'customer_name' => $customer->name,
         ]);
     }

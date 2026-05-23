@@ -255,7 +255,9 @@
     @csrf
     <input type="hidden" name="previous_balance" id="previous_balance" value="0">
     <input type="hidden" name="total_received_khalis" id="total_received_khalis" value="0">
-    <input type="hidden" name="rp_mazdori_weight" id="rp_mazdori_weight_hidden" value="0">
+    <input type="hidden" name="waste_auto" id="waste_auto" value="1">
+    <input type="hidden" name="ratti_auto" id="ratti_auto" value="1">
+    <input type="hidden" name="male_waste_auto" id="male_waste_auto" value="1">
 
     <div class="invoice-grid">
         <!-- Left Column: Form -->
@@ -308,7 +310,130 @@
                 </div>
             </div>
 
-            <!-- Section 2: Gold Received from Party -->
+            <!-- Section 2: Mazdori / Labor -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-hammer"></i>
+                    <h3>Mazdori / Labor <span class="font-urdu">مزدوری</span></h3>
+                </div>
+                <div class="input-grid">
+                    <div class="form-group">
+                        <label for="rp_mazdori_weight">RP Mazdori Gold Weight <span class="font-urdu">آر پی مزدوری وزن</span></label>
+                        <div class="calc-input-wrapper">
+                            <input type="number" step="0.001" name="rp_mazdori_weight" id="rp_mazdori_weight" class="filter-control" placeholder="0.000" value="0">
+                            <span class="unit-label">g</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rp_mazdori_rate">RP Mazdori Rate <span class="font-urdu">آر پی مزدوری ریٹ</span></label>
+                        <div class="calc-input-wrapper">
+                            <input type="number" step="0.01" name="rp_mazdori_rate" id="rp_mazdori_rate" class="filter-control" placeholder="0.00" value="5000">
+                            <span class="unit-label">Rs/g</span>
+                        </div>
+                        <div class="formula-hint">RP Mazdori Weight × Rate = RP Mazdori Amount</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="casting_mazdori_weight">Casting Mazdori Weight <span class="font-urdu">کاسٹنگ مزدوری وزن</span></label>
+                        <div class="calc-input-wrapper">
+                            <input type="number" step="0.001" name="casting_mazdori_weight" id="casting_mazdori_weight" class="filter-control" placeholder="0.000" value="0">
+                            <span class="unit-label">g</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="casting_mazdori_rate">Casting Mazdori Rate <span class="font-urdu">کاسٹنگ مزدوری ریٹ</span></label>
+                        <div class="calc-input-wrapper">
+                            <input type="number" step="0.01" name="casting_mazdori_rate" id="casting_mazdori_rate" class="filter-control" placeholder="0.00" value="5000">
+                            <span class="unit-label">Rs/g</span>
+                        </div>
+                        <div class="formula-hint">Casting Mazdori Weight × Rate = Casting Mazdori Amount</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="rp_rate">Current Gold Rate (Rs per gram) <span class="font-urdu">موجودہ سونے کا ریٹ (روپے فی گرام)</span></label>
+                        <input type="number" step="0.01" name="rp_rate" id="rp_rate" class="filter-control" value="{{ \App\Models\Setting::getSetting('default_rp_rate', 8500) }}" required>
+                        <small class="formula-hint">Used for converting gold value to monetary total.</small>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="remarks">Remarks <span class="font-urdu">ریمارکس</span></label>
+                        <textarea name="remarks" id="remarks" class="filter-control" rows="3" placeholder="Any additional notes..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Gold Calculation -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-calculator"></i>
+                    <h3>Gold Calculation <span class="font-urdu">ذہبی حساب</span></h3>
+                </div>
+                <div class="input-grid">
+                    <input type="hidden" name="waste_auto" id="waste_auto" value="1">
+                    <input type="hidden" name="ratti_auto" id="ratti_auto" value="1">
+                    <input type="hidden" name="male_waste_auto" id="male_waste_auto" value="1">
+
+                    <div class="form-group">
+                        <label for="casting_weight">Casting Weight <span class="font-urdu">کاسٹنگ وزن</span></label>
+                        <div class="calc-input-wrapper">
+                            <input type="number" step="0.001" name="casting_weight" id="casting_weight" class="filter-control" placeholder="0.000" required>
+                            <span class="unit-label">g</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ratti">Ratti <span class="font-urdu">رتی</span></label>
+                        <input type="number" step="0.01" name="ratti" id="ratti" class="filter-control" placeholder="0.00" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ratti_rate">Ratti Rate <span class="font-urdu">رتی ریٹ</span></label>
+                        <div class="calc-input-wrapper">
+                            <input type="number" step="0.001" name="ratti_rate" id="ratti_rate" class="filter-control" placeholder="0.000" value="{{ \App\Models\Setting::getSetting('default_ratti_rate', 0) }}">
+                            <span class="unit-label">g</span>
+                        </div>
+                        <div class="formula-hint">Formula: Casting / 10 × Ratti Rate</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="waste_weight">Waste Weight <span class="font-urdu">ویسٹ وزن</span></label>
+                        <div class="calc-input-wrapper">
+                            <input type="number" step="0.001" name="waste_weight" id="waste_weight" class="filter-control" placeholder="0.000" readonly>
+                            <span class="unit-label">g</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="male_waste">Male Waste <span class="font-urdu">میل ویسٹ</span></label>
+                        <div class="calc-input-wrapper">
+                            <input type="number" step="0.001" name="male_waste" id="male_waste" class="filter-control" placeholder="0.000" readonly>
+                            <span class="unit-label">g</span>
+                        </div>
+                        <div class="formula-hint">Formula: Total Weight / 96 × Ratti</div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Total Weight <span class="font-urdu">کل وزن</span></label>
+                        <div class="calc-input-wrapper">
+                            <input type="number" step="0.001" name="total_weight" id="total_weight" class="filter-control" placeholder="0.000" readonly>
+                            <span class="unit-label">g</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Total Khalis Gold <span class="font-urdu">کل خالص سونا</span></label>
+                        <div class="calc-input-wrapper">
+                            <input type="number" step="0.001" name="gold_khalis" id="gold_khalis" class="filter-control" placeholder="0.000" readonly>
+                            <span class="unit-label">g</span>
+                        </div>
+                        <div class="formula-hint">Formula: Total Weight - Male Waste</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Gold Received from Party -->
             <div class="form-section">
                 <div class="section-header">
                     <i class="bi bi-box-arrow-in-down"></i>
@@ -322,74 +447,6 @@
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">Total Received Khalis:</span>
                         <span class="font-mono" id="display-total-received" style="font-size: 1.1rem; color: var(--success); font-weight: 700;">0.000g</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 3: Gold Calculation - Simplified (No toggles) -->
-            <div class="form-section">
-                <div class="section-header">
-                    <i class="bi bi-calculator"></i>
-                    <h3>Gold Calculation <span class="font-urdu">ذہبی حساب</span></h3>
-                </div>
-                <div class="input-grid">
-                    <div class="form-group">
-                        <label for="casting_weight">Casting Weight <span class="font-urdu">کاسٹنگ وزن</span></label>
-                        <div class="calc-input-wrapper">
-                            <input type="number" step="0.001" name="casting_weight" id="casting_weight" class="filter-control" placeholder="0.000" required>
-                            <span class="unit-label">g</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="ratti">Ratti <span class="font-urdu">رتی</span></label>
-                        <input type="number" step="0.01" name="ratti" id="ratti" class="filter-control" placeholder="0.00" required>
-                    </div>
-                    <div class="form-group full-width">
-                        <label>Gold Khalis (Auto Calculated) <span class="font-urdu">خالص سونا (خودکار)</span></label>
-                        <div class="calc-input-wrapper">
-                            <input type="number" step="0.001" id="gold_khalis_display" class="filter-control" style="background-color: var(--bg-app); font-weight: 700; color: var(--gold-bright);" readonly>
-                            <span class="unit-label">g</span>
-                        </div>
-                        <div class="formula-hint">Formula: Casting - (Casting / 96 × Ratti)</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 4: Mazdori -->
-            <div class="form-section">
-                <div class="section-header">
-                    <i class="bi bi-hammer"></i>
-                    <h3>Mazdori / Labor <span class="font-urdu">مزدوری</span></h3>
-                </div>
-                <div class="input-grid">
-                    <div class="form-group">
-                        <label>RP Mazdori Amount (Rs) <span class="font-urdu">آر پی مزدوری رقم</span></label>
-                        <input type="number" step="0.01" name="rp_mazdori_amount" id="rp_mazdori_amount" class="filter-control" placeholder="0.00" value="0">
-                        <div id="rp-mazdori-gold-display" style="margin-top: 8px; padding: 6px 10px; background: rgba(218,165,32,0.1); border-radius: 6px; font-size: 0.8rem; color: var(--gold-bright);">
-                            Equivalent Khalis Gold: <span id="rp-gold-value">0.000</span>g
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="rp_rate">Current Gold Rate (Rs per gram) <span class="font-urdu">موجودہ سونے کا ریٹ (روپے فی گرام)</span></label>
-                        <input type="number" step="0.01" name="rp_rate" id="rp_rate" class="filter-control" value="{{ \App\Models\Setting::getSetting('default_rp_rate', 8500) }}" required>
-                        <small class="formula-hint">RP Amount ÷ Rate = Equivalent Pure Gold grams</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Casting Mazdori (Direct Khalis Gold) <span class="font-urdu">کاسٹنگ مزدوری (براہ راست خالص سونا)</span></label>
-                        <div class="calc-input-wrapper">
-                            <input type="number" step="0.001" name="casting_mazdori_weight" id="casting_mazdori_weight" class="filter-control" placeholder="0.000" value="0">
-                            <span class="unit-label">g</span>
-                        </div>
-                        <small class="formula-hint">No formula. Add direct pure gold value for casting labor. Added to total invoice.</small>
-                    </div>
-
-                    <!-- Wasooli field removed as requested -->
-
-                    <div class="form-group full-width">
-                        <label for="remarks">Remarks <span class="font-urdu">ریمارکس</span></label>
-                        <textarea name="remarks" id="remarks" class="filter-control" rows="3" placeholder="Any additional notes..."></textarea>
                     </div>
                 </div>
             </div>
@@ -620,49 +677,53 @@ document.addEventListener('DOMContentLoaded', () => {
         calculate();
     });
 
-    // Main Calculation Engine (Simplified - No toggles, always auto ratti formula)
+    // Main Calculation Engine using casting, ratti, ratti rate, and mazdori weights
     function calculate() {
         const casting = parseFloat(document.getElementById('casting_weight').value) || 0;
         const ratti = parseFloat(document.getElementById('ratti').value) || 0;
-        const rpAmount = parseFloat(document.getElementById('rp_mazdori_amount').value) || 0;
-        const rpRate = parseFloat(document.getElementById('rp_rate').value) || 0;
+        const rattiRate = parseFloat(document.getElementById('ratti_rate').value) || 0;
+        const rpMazdoriWeight = parseFloat(document.getElementById('rp_mazdori_weight').value) || 0;
+        const rpMazdoriRate = parseFloat(document.getElementById('rp_mazdori_rate').value) || 0;
         const castMaz = parseFloat(document.getElementById('casting_mazdori_weight').value) || 0;
+        const castMazRate = parseFloat(document.getElementById('casting_mazdori_rate').value) || 0;
+        const rpRate = parseFloat(document.getElementById('rp_rate').value) || 0;
         const previous = parseFloat(document.getElementById('previous_balance').value) || 0;
 
-        const khalis = convertToKhalis(casting, ratti);
-        let rpGold = 0;
-        if (rpRate > 0 && rpAmount > 0) {
-            rpGold = parseFloat((rpAmount / rpRate).toFixed(3));
-        }
-        // Show RP gold equivalent in the RP Mazdori display
-        const rpGoldDisplay = document.getElementById('rp-gold-value');
-        if (rpGoldDisplay) rpGoldDisplay.innerText = rpGold.toFixed(3);
-        const effective = khalis + rpGold + castMaz;
+        const wasteWeight = rattiRate > 0 ? parseFloat((casting / 10 * rattiRate).toFixed(3)) : 0;
+        const totalWeight = parseFloat((casting - wasteWeight).toFixed(3));
+        const maleWaste = totalWeight > 0 && ratti > 0 ? parseFloat((totalWeight / 96 * ratti).toFixed(3)) : 0;
+        const goldKhalis = parseFloat((totalWeight - maleWaste).toFixed(3));
 
-        // Total Received Khalis from dynamic rows
+        const rpMazdoriAmount = parseFloat((rpMazdoriWeight * rpMazdoriRate).toFixed(2));
+        const castMazdoriAmount = parseFloat((castMaz * castMazRate).toFixed(2));
+        const effective = parseFloat((goldKhalis + rpMazdoriWeight + castMaz).toFixed(3));
+
         let totalReceivedKhalis = 0;
         document.querySelectorAll('.receive-khalis').forEach(el => {
             totalReceivedKhalis += parseFloat(el.value || 0);
         });
         totalReceivedKhalis = Math.round(totalReceivedKhalis * 1000) / 1000;
 
-        document.getElementById('gold_khalis_display').value = khalis.toFixed(3);
+        const rpGoldDisplay = document.getElementById('rp-gold-value');
+        if (rpGoldDisplay) rpGoldDisplay.innerText = rpMazdoriWeight.toFixed(3);
+
+        document.getElementById('waste_weight').value = wasteWeight.toFixed(3);
+        document.getElementById('total_weight').value = totalWeight.toFixed(3);
+        document.getElementById('male_waste').value = maleWaste.toFixed(3);
+        document.getElementById('gold_khalis').value = goldKhalis.toFixed(3);
+
         document.getElementById('live-casting').innerText = casting.toFixed(3) + 'g';
         document.getElementById('live-ratti').innerText = ratti.toFixed(2);
-        document.getElementById('val-gold-khalis').innerText = khalis.toFixed(3) + 'g';
-        document.getElementById('live-rp-maz').innerText = rpGold.toFixed(3) + 'g';
+        document.getElementById('val-gold-khalis').innerText = goldKhalis.toFixed(3) + 'g';
+        document.getElementById('live-rp-maz').innerText = rpMazdoriWeight.toFixed(3) + 'g';
         document.getElementById('live-cast-maz').innerText = castMaz.toFixed(3) + 'g';
         document.getElementById('val-effective-gold').innerText = effective.toFixed(3) + 'g';
         document.getElementById('live-total-received').innerText = totalReceivedKhalis.toFixed(3) + 'g';
         document.getElementById('val-prev-balance').innerText = previous.toFixed(3) + 'g';
 
-        // Persist calculated totals into hidden inputs so server gets accurate data
         const totalReceivedInput = document.getElementById('total_received_khalis');
-        const rpMazHidden = document.getElementById('rp_mazdori_weight_hidden');
         if (totalReceivedInput) totalReceivedInput.value = totalReceivedKhalis.toFixed(3);
-        if (rpMazHidden) rpMazHidden.value = rpGold.toFixed(3);
 
-        // Update additional live displays
         const liveReceivedDeduct = document.getElementById('live-received-deduct');
         if (liveReceivedDeduct) liveReceivedDeduct.innerText = totalReceivedKhalis.toFixed(3) + 'g';
         const thisInvoiceEl = document.getElementById('val-this-invoice');

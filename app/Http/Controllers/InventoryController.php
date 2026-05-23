@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Inventory;
 use App\Models\Invoice;
 use App\Models\GoldReceipt;
+use App\Models\InvoiceReceive;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -21,25 +22,17 @@ class InventoryController extends Controller
             $inventory->period_label = 'Current Stock';
         }
 
-        $fromDate = $request->get('from_date', now()->subMonths(6)->format('Y-m-d'));
-        $toDate = $request->get('to_date', now()->format('Y-m-d'));
-
-        $givenWeight = Invoice::where('status', 'active')
-            ->when($fromDate, fn($q) => $q->where('invoice_date', '>=', $fromDate))
-            ->when($toDate, fn($q) => $q->where('invoice_date', '<=', $toDate))
-            ->sum('effective_gold');
-
-        $receiptKhalis = GoldReceipt::when($fromDate, fn($q) => $q->where('receipt_date', '>=', $fromDate))
-            ->when($toDate, fn($q) => $q->where('receipt_date', '<=', $toDate))
-            ->sum('total_khalis_weight');
-
-        $invoiceReceivedKhalis = Invoice::where('status', 'active')
-            ->when($fromDate, fn($q) => $q->where('invoice_date', '>=', $fromDate))
-            ->when($toDate, fn($q) => $q->where('invoice_date', '<=', $toDate))
-            ->sum('total_received_khalis');
-
+        // Get current inventory totals from transactions
+        // These are now automatically maintained by observers
+        $givenWeight = Invoice::where('status', 'active')->sum('effective_gold');
+        
+        $receiptKhalis = GoldReceipt::sum('total_khalis_weight');
+        
+        $invoiceReceivedKhalis = InvoiceReceive::sum('khalis_weight');
+        
         $totalReceived = $receiptKhalis + $invoiceReceivedKhalis;
 
+        // Ensure inventory record exists with correct values
         $inventory->received = $totalReceived;
         $inventory->given_invoices = $givenWeight;
         $closingBalance = $inventory->calculateClosingBalance();
@@ -55,6 +48,11 @@ class InventoryController extends Controller
             ->take(10)
             ->get();
 
+        $recentInvoiceReceives = InvoiceReceive::with('invoice.customer')
+            ->latest('created_at')
+            ->take(10)
+            ->get();
+
         $customers = Customer::orderBy('name')->get();
 
         return view('pages.inventory.index', compact(
@@ -66,8 +64,7 @@ class InventoryController extends Controller
             'closingBalance',
             'recentReceipts',
             'recentInvoices',
-            'fromDate',
-            'toDate',
+            'recentInvoiceReceives',
             'customers'
         ));
     }
@@ -84,14 +81,15 @@ class InventoryController extends Controller
         $inventory->fill($validated);
         $inventory->updated_by = auth()->id();
 
+        // Recalculate from current transaction totals
         $inventory->received = GoldReceipt::sum('total_khalis_weight') 
-            + Invoice::where('status', 'active')->sum('total_received_khalis');
+            + InvoiceReceive::sum('khalis_weight');
         $inventory->given_invoices = Invoice::where('status', 'active')->sum('effective_gold');
         $inventory->closing_balance = $inventory->calculateClosingBalance();
         
         $inventory->save();
 
         return redirect()->route('inventory.index')
-            ->with('success', 'Inventory refreshed successfully. Opening stock and all receipts are now properly reflected.');
+            ->with('success', 'Inventory updated successfully. Opening balance set and closing stock recalculated from all transactions.');
     }
 }

@@ -128,6 +128,7 @@
     </div>
 
     @if($selectedCustomer && $ledgerData)
+    @if($selectedCustomer && $ledgerData)
         <div class="filter-row">
             <form method="GET" action="{{ route('ledger.index') }}">
                 <input type="hidden" name="customer_id" value="{{ $selectedCustomer->id }}">
@@ -155,60 +156,74 @@
                         <th>Date</th>
                         <th>Type</th>
                         <th>Description</th>
-                        <th style="text-align:right">Gold In</th>
-                        <th style="text-align:right">Gold Out</th>
+                        <th style="text-align:right">Gold In (Received)</th>
+                        <th style="text-align:right">Gold Out (Given)</th>
                         <th style="text-align:right">Wasooli</th>
-                        <th style="text-align:right">Balance</th>
+                        <th style="text-align:right">Running Balance</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @php
-                        $runningBalance = $ledgerData['opening_balance'] ?? 0;
-                    @endphp
-
                     <!-- Opening -->
                     <tr style="background:rgba(234,179,8,0.1);">
                         <td colspan="6"><strong>Opening Balance</strong></td>
-                        <td class="font-mono" style="text-align:right; font-weight:700;">{{ number_format($runningBalance, 3) }}g</td>
+                        <td class="font-mono" style="text-align:right; font-weight:700;">{{ number_format($ledgerData['opening_balance'] ?? 0, 3) }}g</td>
                     </tr>
 
-                    <!-- Receipts (Gold In) -->
-                    @foreach($ledgerData['receipts'] ?? [] as $receipt)
-                        @php
-                            $runningBalance -= $receipt->total_khalis_weight; // Customer gave gold → reduces their balance
-                        @endphp
-                        <tr class="receipt-row">
-                            <td>{{ $receipt->receipt_date->format('d/m/Y') }}</td>
-                            <td><span style="background:#4ade80;color:black;padding:2px 8px;border-radius:999px;font-size:0.7rem;">RECEIPT</span></td>
-                            <td>Gold Receipt #{{ $receipt->id }}</td>
-                            <td class="positive" style="text-align:right">+{{ number_format($receipt->total_khalis_weight, 3) }}g</td>
-                            <td style="text-align:right">-</td>
-                            <td style="text-align:right">-</td>
-                            <td class="font-mono" style="text-align:right; font-weight:600;">{{ number_format($runningBalance, 3) }}g</td>
-                        </tr>
-                    @endforeach
-
-                    <!-- Invoices -->
-                    @foreach($ledgerData['invoices'] ?? [] as $invoice)
-                        @php
-                            $runningBalance = $invoice->remaining_balance;
-                        @endphp
+                    <!-- Integrated Transactions (Chronological) -->
+                    @if(!empty($ledgerData['transactions']))
+                        @foreach($ledgerData['transactions'] as $txn)
+                            @if($txn['type'] === 'invoice')
+                                @php
+                                    $invoice = $txn['object'];
+                                @endphp
+                                <tr>
+                                    <td>{{ $txn['date']->format('d/m/Y') }}</td>
+                                    <td><span style="background:#eab308;color:black;padding:2px 8px;border-radius:999px;font-size:0.7rem;">INVOICE</span></td>
+                                    <td>Invoice #{{ $invoice->invoice_no }}</td>
+                                    <td style="text-align:right">
+                                        @if($invoice->total_received_khalis > 0)
+                                            -{{ number_format($invoice->total_received_khalis, 3) }}g
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="negative" style="text-align:right">+{{ number_format($invoice->effective_gold ?? 0, 3) }}g</td>
+                                    <td class="font-mono" style="text-align:right">
+                                        @if($invoice->wasooli > 0)
+                                            -{{ number_format($invoice->wasooli ?? 0, 3) }}g
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td class="font-mono" style="text-align:right; font-weight:600;color:{{ $txn['running_balance_after'] > 0 ? 'var(--error)' : 'var(--success)' }};">
+                                        {{ number_format($txn['running_balance_after'], 3) }}g
+                                    </td>
+                                </tr>
+                            @elseif($txn['type'] === 'receipt')
+                                @php
+                                    $receipt = $txn['object'];
+                                @endphp
+                                <tr class="receipt-row">
+                                    <td>{{ $txn['date']->format('d/m/Y') }}</td>
+                                    <td><span style="background:#4ade80;color:black;padding:2px 8px;border-radius:999px;font-size:0.7rem;">RECEIPT</span></td>
+                                    <td>Receipt #{{ $txn['receipt_no'] }}</td>
+                                    <td class="positive" style="text-align:right">-{{ number_format($receipt->total_khalis_weight, 3) }}g</td>
+                                    <td style="text-align:right">-</td>
+                                    <td style="text-align:right">-</td>
+                                    <td class="font-mono" style="text-align:right; font-weight:600;">{{ number_format($txn['running_balance_after'], 3) }}g</td>
+                                </tr>
+                            @endif
+                        @endforeach
+                    @else
                         <tr>
-                            <td>{{ $invoice->invoice_date->format('d/m/Y') }}</td>
-                            <td><span style="background:#eab308;color:black;padding:2px 8px;border-radius:999px;font-size:0.7rem;">INVOICE</span></td>
-                            <td>Invoice #{{ $invoice->formatted_invoice_no ?? $invoice->id }}</td>
-                            <td style="text-align:right">-</td>
-                            <td class="negative" style="text-align:right">{{ number_format($invoice->effective_gold ?? 0, 3) }}g</td>
-                            <td class="font-mono" style="text-align:right">{{ number_format($invoice->wasooli ?? 0, 3) }}g</td>
-                            <td class="font-mono" style="text-align:right; font-weight:600;color:{{ $invoice->remaining_balance > 0 ? 'var(--error)' : 'var(--success)' }};">
-                                {{ number_format($invoice->remaining_balance, 3) }}g
+                            <td colspan="7" style="text-align:center; padding:40px; color:var(--text-secondary);">
+                                No transactions in selected period
                             </td>
                         </tr>
-                    @endforeach
+                    @endif
 
                     <tr class="totals-row">
-                        <td colspan="3"><strong>FINAL BALANCE</strong></td>
-                        <td colspan="3"></td>
+                        <td colspan="6"><strong>FINAL BALANCE</strong></td>
                         <td class="font-mono" style="text-align:right; font-size:1.1rem; font-weight:700; color:{{ ($ledgerData['current_balance'] ?? 0) > 0 ? 'var(--error)' : 'var(--success)' }};">
                             {{ number_format($ledgerData['current_balance'] ?? 0, 3) }}g
                         </td>
