@@ -1,0 +1,29 @@
+{
+    "$schema": "https://www.schemastore.org/package.json",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite"
+    },
+    "dependencies": {
+        "axios": "^1.11.0",
+        "chart.js": "^4.4.0",
+        "three": "^0.160.0",
+        "gsap": "^3.12.0",
+        "bootstrap": "^5.3.0",
+        "bootstrap-icons": "^1.11.0",
+        "@popperjs/core": "^2.11.0",
+        "alpinejs": "^3.13.0",
+        "flatpickr": "^4.6.13",
+        "cleave.js": "^1.6.0"
+    },
+    "devDependencies": {
+        "vite": "^7.0.7",
+        "laravel-vite-plugin": "^2.0.0",
+        "sass": "^1.69.0",
+        "@tailwindcss/vite": "^4.0.0",
+        "tailwindcss": "^4.0.0",
+        "concurrently": "^9.0.1"
+    }
+}

@@ -1,0 +1,81 @@
+.offline-status-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: rgba(33, 33, 33, 0.96);
+  color: #ffffff;
+  font-size: 0.95rem;
+  padding: 0.8rem 1rem;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.24);
+}
+
+.offline-status-bar.visible {
+  display: flex;
+}
+
+.status-bar-content {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.status-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.status-dot.offline {
+  background: #ef4444;
+}
+
+.status-dot.online {
+  background: #10b981;
+}
+
+.status-dot.syncing {
+  background: #f59e0b;
+}
+
+.status-dot.failed {
+  background: #dc2626;
+}
+
+.status-pill {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.status-action {
+  background: #ffffff;
+  color: #1f2937;
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.status-progress {
+  width: 120px;
+  height: 0.5rem;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.status-progress span {
+  display: block;
+  height: 100%;
+  background: #22c55e;
+  transition: width 0.3s ease;
+}
