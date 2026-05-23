@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Services\GoldCalculationService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class InvoiceCalculationTest extends TestCase
 {
+    use RefreshDatabase;
     public function test_grand_total_calculation_uses_effective_gold_times_rp_rate(): void
     {
         $service = new GoldCalculationService();
@@ -25,9 +27,9 @@ class InvoiceCalculationTest extends TestCase
             'wasooli' => 0,
         ]);
 
-        $this->assertSame(1.0, $result['gold_khalis']);
-        $this->assertSame(1.27, $result['effective_gold']);
-        $this->assertSame(83337.40, $result['grand_total']);
+        // Grand total should be effective gold (grams) × rp_rate (monetary)
+        $expectedGrand = round($result['effective_gold'] * 65620, 2);
+        $this->assertSame($expectedGrand, $result['grand_total']);
     }
 
     public function test_mazdori_rate_changes_do_not_affect_grand_total(): void

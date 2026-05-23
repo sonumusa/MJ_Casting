@@ -73,8 +73,8 @@ class GoldCalculationService
         // Step 8: effective_gold = round(gold_khalis + rp_mazdori_weight + casting_mazdori_weight, 3)
         $effectiveGold = round($goldKhalis + $rpMazdoriWeight + $castingMazdoriWeight, 3);
 
-        // Step 9: grand_total = round(effective_gold, 3) — grams total only
-        $grandTotal = round($effectiveGold, 3);
+        // Step 9: grand_total = round(effective_gold × rp_rate, 2) — monetary total
+        $grandTotal = round($effectiveGold * $rpRate, 2);
 
         // Step 10: remaining_balance = round(previous_balance + grand_total - wasooli - total_received_khalis, 3)
         // If party gives gold (received), it reduces their balance
