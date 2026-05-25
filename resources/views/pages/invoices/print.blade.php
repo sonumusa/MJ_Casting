@@ -1,213 +1,378 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice {{ $invoice->invoice_no }}</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            line-height: 1.5;
-            color: #1a1a2e;
-            background: #fff;
-            padding: 24px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .header { text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #DAA520; }
-        .header h1 { font-size: 1.6rem; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
-        .header .urdu { font-size: 1.1rem; color: #444; margin-bottom: 6px; }
-        .header .contact { font-size: 0.8rem; color: #666; }
-        .badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            margin-left: 8px;
-        }
-        .badge.customer { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-        .badge.dukandar { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-        .badge.karigar { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .meta-item { padding: 10px 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; }
-        .meta-label { font-size: 0.65rem; text-transform: uppercase; color: #888; font-weight: 600; margin-bottom: 3px; }
-        .meta-value { font-weight: 600; font-size: 0.95rem; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-        th { background: #1a1a2e; color: #DAA520; text-align: left; padding: 10px 12px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-        td { padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        .total-row { background: #f8f9fa; font-weight: 700; }
-        .total-row td { border-top: 2px solid #DAA520; border-bottom: 2px solid #DAA520; }
-        .highlight { background: #fffbeb; }
-        .highlight td { color: #92400e; font-weight: 700; }
-        .signature { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .signature-box { border-top: 1px solid #ccc; padding-top: 8px; font-size: 0.8rem; color: #666; }
-        .formula { font-size: 0.7rem; color: #999; font-style: italic; text-align: center; margin-top: 16px; padding-top: 12px; border-top: 1px dashed #ddd; }
-        @media print {
-            body { padding: 0; }
-            .no-print { display: none; }
-        }
-        .print-btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 10px 20px; background: linear-gradient(135deg, #B8860B, #DAA520);
-            color: white; border: none; border-radius: 8px;
-            font-weight: 600; cursor: pointer; font-size: 0.9rem;
-            margin-bottom: 16px;
-        }
-        .print-btn:hover { filter: brightness(1.1); }
-    </style>
-</head>
-<body>
-    <div class="no-print" style="text-align:center;">
-        <button class="print-btn" onclick="window.print()">
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/><path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3H5v-3a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1z"/></svg>
-            Print Invoice
-        </button>
+@extends('layouts.print')
+
+@section('title', 'Invoice #' . $invoice->invoice_no)
+
+@section('extra_css')
+<style>
+    .mj-header {
+        background-color: #E8481C;
+        color: white;
+        text-align: center;
+        padding: 10px 0;
+        margin-bottom: 5px;
+    }
+    .mj-header h1 {
+        margin: 0;
+        font-size: 24pt;
+        font-family: 'Noto Nastaliq Urdu', serif;
+        font-weight: bold;
+    }
+    .mj-header p {
+        margin: 0;
+        font-size: 14pt;
+        font-weight: bold;
+    }
+
+    .contact-row {
+        text-align: center;
+        font-size: 8pt;
+        font-family: 'Noto Nastaliq Urdu', serif;
+        padding: 2px 0;
+        border-bottom: 1px solid #000;
+        margin-bottom: 2px;
+    }
+
+    .address-line {
+        text-align: center;
+        font-size: 8pt;
+        margin-bottom: 5px;
+    }
+
+    .meta-block {
+        border: 1px solid #000;
+        padding: 5px;
+        margin-bottom: 10px;
+    }
+    .meta-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .meta-table td {
+        font-size: 9pt;
+        padding: 2px;
+    }
+    .meta-label {
+        font-family: 'Noto Nastaliq Urdu', serif;
+        text-align: right;
+        padding-left: 5px;
+    }
+    .meta-value {
+        text-align: left;
+        font-weight: bold;
+    }
+
+    .calc-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+    }
+    .calc-table td {
+        padding: 3px 0;
+        font-size: 10pt;
+    }
+    .calc-val {
+        text-align: left;
+        width: 40%;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: bold;
+    }
+    .calc-label {
+        text-align: right;
+        width: 60%;
+        font-family: 'Noto Nastaliq Urdu', serif;
+    }
+
+    .line-separator {
+        border-top: 1px dashed #000;
+        margin: 5px 0;
+    }
+
+    /* ✅ NEW: Received & Wasooli section styles */
+    .received-section {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid #10b981;
+        border-radius: 4px;
+        padding: 5px;
+        margin: 5px 0;
+    }
+    .wasooli-section {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid #3b82f6;
+        border-radius: 4px;
+        padding: 5px;
+        margin: 5px 0;
+    }
+
+    .charges-block {
+        margin-top: 10px;
+    }
+    .charge-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 9pt;
+        padding: 2px 0;
+    }
+    .charge-center {
+        flex: 1;
+        text-align: center;
+        font-family: 'Noto Nastaliq Urdu', serif;
+    }
+
+    /* ✅ NEW: Balance summary box */
+    .balance-summary {
+        border: 2px solid #000;
+        padding: 8px;
+        margin-top: 10px;
+        background: #fff9c4;
+    }
+    .balance-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 2px 0;
+        font-size: 10pt;
+    }
+    .balance-row.total {
+        border-top: 2px solid #000;
+        padding-top: 5px;
+        margin-top: 5px;
+        font-weight: bold;
+        font-size: 12pt;
+    }
+
+    .footer-section {
+        margin-top: 15px;
+        border-top: 1px solid #000;
+        padding-top: 5px;
+        text-align: center;
+        font-size: 7pt;
+    }
+    .footer-disclaimer {
+        font-family: 'Noto Nastaliq Urdu', serif;
+        margin-bottom: 5px;
+    }
+
+    @media print {
+        .mj-header { background-color: #E8481C !important; -webkit-print-color-adjust: exact; }
+        .balance-summary { background: #fff9c4 !important; -webkit-print-color-adjust: exact; }
+        .received-section { background: rgba(16, 185, 129, 0.1) !important; -webkit-print-color-adjust: exact; }
+        .wasooli-section { background: rgba(59, 130, 246, 0.1) !important; -webkit-print-color-adjust: exact; }
+    }
+</style>
+@endsection
+
+@php
+    function fv($val, $dec = 3) {
+        if ($val === null || $val === '' || $val == 0) return '—';
+        return number_format($val, $dec);
+    }
+    
+    // ✅ Helper variables for clean template
+    $prevBalance = $invoice->previous_balance ?? 0;
+    $effectiveGold = $invoice->effective_gold ?? 0;
+    $receivedKhalis = $invoice->total_received_khalis ?? 0;
+    $wasooli = $invoice->wasooli ?? 0;
+    $remainingBalance = $invoice->remaining_balance ?? 0;
+@endphp
+
+@section('content')
+    <!-- Section 1: Header Band -->
+    <div class="mj-header">
+        <h1>ایم جے کاسٹنگ</h1>
+        <p>M.J Casting</p>
     </div>
 
-    <div class="header">
-        <h1>{{ $workshopSettings['name'] }}</h1>
-        <div class="urdu">{{ $workshopSettings['name_urdu'] }}</div>
-        <div class="contact">
-            @if($workshopSettings['address']) {{ $workshopSettings['address'] }} &middot; @endif
-            @if($workshopSettings['phone']) {{ $workshopSettings['phone'] }} @endif
-            @if($workshopSettings['phone2']) / {{ $workshopSettings['phone2'] }} @endif
-            @if($workshopSettings['city']) &middot; {{ $workshopSettings['city'] }} @endif
-        </div>
+    <!-- Section 2: Contact Info Row -->
+    <div class="contact-row">
+        فریم نالی: {{ \App\Models\Setting::getSetting('phone', '0300-0000000') }} &nbsp; | &nbsp; 
+        کریم نالی: {{ \App\Models\Setting::getSetting('phone_2', '0300-0000000') }}
     </div>
 
-    <div class="meta">
-        <div class="meta-item">
-            <div class="meta-label">Invoice No / بل نمبر</div>
-            <div class="meta-value">{{ $invoice->invoice_no }}
-                <span class="badge {{ $invoice->invoice_type }}">{{ ucfirst($invoice->invoice_type) }}</span>
-            </div>
-        </div>
-        <div class="meta-item">
-            <div class="meta-label">Date / تاریخ</div>
-            <div class="meta-value">{{ $invoice->invoice_date->format('d/m/Y') }}</div>
-        </div>
-        <div class="meta-item">
-            <div class="meta-label">Party / گاہک</div>
-            <div class="meta-value">{{ $invoice->customer->name ?? 'Unknown' }}</div>
-        </div>
-        <div class="meta-item">
-            <div class="meta-label">Book No / بک نمبر</div>
-            <div class="meta-value">{{ $invoice->manual_book_no ?: '-' }}</div>
-        </div>
+    <!-- Section 3: Address Line -->
+    <div class="address-line">
+        {{ \App\Models\Setting::getSetting('address', 'Plot C-947, Karigar Area, Lahore') }}
     </div>
 
-    @if($invoice->receives->count() > 0)
-    <h3 style="font-size:0.85rem; margin-bottom:10px; color:#1a1a2e;">Gold Received from Party / سونا وصول</h3>
-    <table>
-        <thead>
+    <!-- Section 4: Meta Block -->
+    <div class="meta-block">
+        <table class="meta-table">
             <tr>
-                <th>#</th>
-                <th>Description / تفصیل</th>
-                <th class="text-right">Gross Wt / کچا</th>
-                <th class="text-right">Ratti / رتی</th>
-                <th class="text-right">Khalis / خالص</th>
+                <td class="meta-value">{{ $invoice->id }}</td>
+                <td class="meta-label">نمبر</td>
+                <td class="meta-value" style="text-align: right;">{{ $invoice->customer->name }}</td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach($invoice->receives as $receive)
             <tr>
-                <td>{{ $loop->iteration }}</td>
-                <td>{{ $receive->description ?: '-' }}</td>
-                <td class="text-right font-mono">{{ number_format($receive->gross_weight, 3) }} g</td>
-                <td class="text-right font-mono">{{ number_format($receive->ratti_impurity, 2) }} r</td>
-                <td class="text-right font-mono" style="font-weight:700;">{{ number_format($receive->khalis_weight, 3) }} g</td>
+                <td class="meta-value">0</td>
+                <td class="meta-label">اینٹری</td>
+                <td class="meta-value" style="text-align: right;">{{ $invoice->customer->phone }} <span class="meta-label">فون نمبر</span></td>
             </tr>
-            @endforeach
-            <tr class="total-row">
-                <td colspan="4" class="text-right">Total Received Khalis / کل وصول خالص</td>
-                <td class="text-right font-mono">{{ number_format($invoice->total_received_khalis, 3) }} g</td>
+            <tr>
+                <td class="meta-value">{{ $invoice->invoice_date->format('d-m-Y') }}</td>
+                <td class="meta-label">تاریخ</td>
+                <td class="meta-value" style="text-align: right;">{{ $invoice->invoice_no }} <span class="meta-label">بل نمبر</span></td>
             </tr>
-        </tbody>
+            <tr>
+                <td class="meta-value">{{ $invoice->created_at->format('h:i A') }}</td>
+                <td class="meta-label">وقت</td>
+                <td class="meta-value" style="text-align: right;">{{ number_format($invoice->rp_rate, 2) }} <span class="meta-label">میل:</span></td>
+            </tr>
+            @if($invoice->manual_book_no)
+            <tr>
+                <td colspan="2"></td>
+                <td class="meta-value" style="text-align: right;">{{ $invoice->manual_book_no }} <span class="meta-label">کتاب نمبر</span></td>
+            </tr>
+            @endif
+        </table>
+    </div>
+
+    <!-- Section 5: Calculation Block (Gold Work) -->
+    <table class="calc-table">
+        <tr>
+            <td class="calc-val">{{ fv($invoice->casting_weight) }}</td>
+            <td class="calc-label">کاسٹ وزن</td>
+        </tr>
+        <tr>
+            <td class="calc-val">{{ fv($invoice->waste_weight) }}</td>
+            <td class="calc-label">ویسٹ</td>
+        </tr>
+        <tr>
+            <td class="calc-val">{{ fv($invoice->total_weight) }}</td>
+            <td class="calc-label">ٹوٹل سونا پاؤنڈ</td>
+        </tr>
+        <tr>
+            <td class="calc-val">{{ fv($invoice->male_waste) }}</td>
+            <td class="calc-label">میل کاٹ</td>
+        </tr>
+        <tr>
+            <td class="calc-val">{{ fv($invoice->gold_khalis) }}</td>
+            <td class="calc-label">خالص سونا</td>
+        </tr>
+        <tr>
+            <td class="calc-val">
+                {{ fv($invoice->rp_mazdori_weight) }}
+                @if($invoice->ratti > 0)
+                    <span style="font-size: 7pt; vertical-align: top;">{{ $invoice->ratti }}</span>
+                @endif
+            </td>
+            <td class="calc-label">اجرت کا پاسہ</td>
+        </tr>
+        <tr>
+            <td class="calc-val">{{ fv($invoice->casting_mazdori_weight) }}</td>
+            <td class="calc-label">یارن کا پاسہ</td>
+        </tr>
+        <tr style="border-top: 1px solid #000;">
+            <td class="calc-val">{{ fv($effectiveGold) }}</td>
+            <td class="calc-label">ٹوٹل ایفیکٹو گولڈ</td>
+        </tr>
     </table>
+
+    <!-- ✅ NEW Section 5.5: Received Gold & Wasooli -->
+    @if($receivedKhalis > 0 || $wasooli > 0)
+    <div style="margin: 10px 0;">
+        @if($receivedKhalis > 0)
+        <div class="received-section">
+            <table class="calc-table" style="margin:0;">
+                <tr>
+                    <td class="calc-val" style="color:#10b981;">+ {{ fv($receivedKhalis) }}</td>
+                    <td class="calc-label">وصولی (سونے میں) ✨</td>
+                </tr>
+            </table>
+        </div>
+        @endif
+        
+        @if($wasooli > 0)
+        <div class="wasooli-section">
+            <table class="calc-table" style="margin:0;">
+                <tr>
+                    <td class="calc-val" style="color:#3b82f6;">- {{ fv($wasooli) }}</td>
+                    <td class="calc-label">وصولی (کیش میں) 💰</td>
+                </tr>
+            </table>
+        </div>
+        @endif
+    </div>
     @endif
 
-    <h3 style="font-size:0.85rem; margin-bottom:10px; color:#1a1a2e;">Casting Calculation / کاسٹنگ حساب</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Item / تفصیل</th>
-                <th class="text-right">Formula</th>
-                <th class="text-right">Value / رقم</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($breakdown['steps'] as $step)
-            <tr class="{{ in_array($step['label'], ['Gold Khalis','Effective Gold','Grand Total','Received Khalis']) ? 'highlight' : '' }}">
-                <td>{{ $step['label'] }}</td>
-                <td class="text-right" style="font-size:0.75rem; color:#888;">{{ $step['formula'] }}</td>
-                <td class="text-right font-mono">{{ number_format($step['value'], 3) }} g</td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+    <!-- Section 6: Balance Calculation Block (FIXED FORMULA) -->
+    <div class="balance-summary">
+        <div style="text-align:center;font-weight:bold;margin-bottom:5px;font-family:'Noto Nastaliq Urdu',serif;">
+            حساب کتاب - بیلنس
+        </div>
+        
+        <div class="balance-row">
+            <span class="calc-label" style="width:70%;">پچھلا بیلنس:</span>
+            <span class="calc-val">{{ fv($prevBalance) }}</span>
+        </div>
+        <div class="balance-row">
+            <span class="calc-label" style="width:70%;">+ ایفیکٹو گولڈ (دیا گیا):</span>
+            <span class="calc-val" style="color:var(--gold-primary, #daa520);">+ {{ fv($effectiveGold) }}</span>
+        </div>
+        
+        @if($receivedKhalis > 0)
+        <div class="balance-row">
+            <span class="calc-label" style="width:70%;">- وصولی (سونے میں):</span>
+            <span class="calc-val" style="color:#10b981;">- {{ fv($receivedKhalis) }}</span>
+        </div>
+        @endif
+        
+        @if($wasooli > 0)
+        <div class="balance-row">
+            <span class="calc-label" style="width:70%;">- وصولی (کیش):</span>
+            <span class="calc-val" style="color:#3b82f6;">- {{ fv($wasooli) }}</span>
+        </div>
+        @endif
+        
+        <div class="balance-row total">
+            <span class="calc-label" style="width:70%;">باقی بیلنس:</span>
+            <span class="calc-val" style="color:{{ $remainingBalance > 0 ? '#dc2626' : '#10b981' }};">
+                {{ fv($remainingBalance) }}
+            </span>
+        </div>
+        
+        <div style="text-align:center;margin-top:5px;font-size:8pt;color:#666;">
+            {{ $remainingBalance > 0 ? 'پارٹی آپ کی مقروض ہے' : 'آپ پارٹی کے مقروض ہیں' }}
+        </div>
+    </div>
 
-    <h3 style="font-size:0.85rem; margin-bottom:10px; color:#1a1a2e;">Balance Summary / بقایا خلاصہ</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Description / تفصیل</th>
-                <th class="text-right">Amount / رقم</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Previous Balance / سابقہ بقایا</td>
-                <td class="text-right font-mono">{{ number_format($breakdown['balance_chain']['previous_balance'], 3) }} g</td>
-            </tr>
-            <tr>
-                <td>+ This Invoice / + یہ بل</td>
-                <td class="text-right font-mono">{{ number_format($breakdown['balance_chain']['grand_total'], 3) }} g</td>
-            </tr>
-            <tr>
-                <td>- Received Khalis / - وصول خالص</td>
-                <td class="text-right font-mono" style="color: #059669;">{{ number_format($breakdown['balance_chain']['received_khalis'] ?? 0, 3) }} g</td>
-            </tr>
-            <tr>
-                <td>- Wasooli / - وصولی</td>
-                <td class="text-right font-mono">{{ number_format($breakdown['balance_chain']['wasooli'], 3) }} g</td>
-            </tr>
-            <tr class="total-row">
-                <td>Remaining Balance / باقی بقایا</td>
-                <td class="text-right font-mono" style="color: {{ $breakdown['balance_chain']['remaining_balance'] > 0 ? '#dc2626' : '#059669' }};">
-                    {{ number_format($breakdown['balance_chain']['remaining_balance'], 3) }} g
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <!-- Section 7: Receive Details (if invoice has receive rows) -->
+    @if($invoice->receives && $invoice->receives->count() > 0)
+    <div style="margin-top:15px;border:1px solid #000;padding:5px;">
+        <div style="font-weight:bold;margin-bottom:5px;font-family:'Noto Nastaliq Urdu',serif;">
+            تفصیل وصولی (سونے کی)
+        </div>
+        <table class="calc-table" style="font-size:9pt;">
+            <thead>
+                <tr style="border-bottom:1px solid #000;">
+                    <th style="text-align:left;">تفصیل</th>
+                    <th style="text-align:right;">گراس</th>
+                    <th style="text-align:right;">خالص</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($invoice->receives as $receive)
+                <tr>
+                    <td>{{ $receive->description ?? 'Gold' }}</td>
+                    <td style="text-align:right;font-family:monospace;">{{ fv($receive->gross_weight ?? 0) }}</td>
+                    <td style="text-align:right;font-family:monospace;color:#10b981;">{{ fv($receive->khalis_weight ?? 0) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
 
     @if($invoice->remarks)
-    <div style="margin-top:16px; padding:12px; background:#f8f9fa; border-radius:8px; border:1px solid #e9ecef;">
-        <strong>Remarks / ریمارکس:</strong> {{ $invoice->remarks }}
+    <div style="margin-top:10px;font-size:9pt;border-top:1px dashed #000;padding-top:5px;">
+        <strong>نوٹ:</strong> {{ $invoice->remarks }}
     </div>
     @endif
 
-    <div class="signature">
-        <div class="signature-box">
-            <strong>Party Signature / گاہک دستخط</strong><br>
-            ________________________
-        </div>
-        <div class="signature-box" style="text-align:right;">
-            <strong>Authorized Signature / مجاز دستخط</strong><br>
-            ________________________
+    <!-- Section 8: Footer -->
+    <div class="footer-section">
+        <div class="footer-disclaimer">براہ کرم مال وصول کرتے وقت چیک کریں بعد میں شکایت قابل قبول نہیں</div>
+        <div>Messenger: {{ \App\Models\Setting::getSetting('phone', '0322-6796306') }}</div>
+        <div>{{ \App\Models\Setting::getSetting('workshop_name', 'M.J Casting') }} یوٹیوب چینل</div>
+        <div style="margin-top:3px;font-size:6pt;color:#999;">
+            Printed: {{ now()->format('d-m-Y h:i A') }} | Invoice ID: {{ $invoice->id }}
         </div>
     </div>
-
-    <div class="formula">
-        Formula: Khalis = Gross - (Gross / 96 × Ratti) | خالص = کچا - (کچا / ۹۶ × رتی)
-    </div>
-</body>
-</html>
+@endsection

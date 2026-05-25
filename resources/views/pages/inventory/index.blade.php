@@ -128,11 +128,19 @@
     <form method="GET" class="d-flex gap-3 flex-wrap align-items-end">
         <div>
             <label class="stat-label">From Date</label>
-            <input type="date" name="from_date" value="{{ $fromDate }}" class="filter-control" style="width: 160px;">
+            <input type="date" 
+                   name="from_date" 
+                   value="{{ old('from_date', $fromDate ?? '') }}" 
+                   class="filter-control" 
+                   style="width: 160px;">
         </div>
         <div>
             <label class="stat-label">To Date</label>
-            <input type="date" name="to_date" value="{{ $toDate }}" class="filter-control" style="width: 160px;">
+            <input type="date" 
+                   name="to_date" 
+                   value="{{ old('to_date', $toDate ?? '') }}" 
+                   class="filter-control" 
+                   style="width: 160px;">
         </div>
         <button type="submit" class="btn-gold" style="height: 42px; padding: 0 24px;">
             <i class="bi bi-funnel"></i> Filter Report
@@ -142,34 +150,44 @@
 </div>
 
 <div class="stats-grid">
+    <!-- Total Received Card - Now with 3 components -->
     <div class="stat-card">
         <div class="stat-icon green"><i class="bi bi-box-arrow-in-down"></i></div>
         <div class="stat-label">Total Received <span class="font-urdu">کل وصول</span></div>
         <div class="stat-value" style="color: var(--success);">{{ number_format($totalReceived ?? 0, 3) }} <small>g</small></div>
         <div class="stat-sub">
-            Receipts: {{ number_format($receiptKhalis ?? 0, 3) }}g<br>
-            From Invoices: {{ number_format($invoiceReceivedKhalis ?? 0, 3) }}g
+            📥 Gold Receipts: {{ number_format($receiptKhalis ?? 0, 3) }}g<br>
+            📥 Invoice Receives: {{ number_format($invoiceReceivedKhalis ?? 0, 3) }}g<br>
+            📥 Invoice Internal: {{ number_format($invoiceInternalReceived ?? 0, 3) }}g ✨
         </div>
     </div>
+
+    <!-- Total Given Card -->
     <div class="stat-card">
         <div class="stat-icon red"><i class="bi bi-box-arrow-up"></i></div>
         <div class="stat-label">Total Given <span class="font-urdu">کل دیا گیا</span></div>
         <div class="stat-value" style="color: var(--error);">{{ number_format($givenWeight ?? 0, 3) }} <small>g</small></div>
-        <div class="stat-sub">From active invoices</div>
+        <div class="stat-sub">From active invoices (effective_gold)</div>
     </div>
+
+    <!-- Closing Balance Card -->
     <div class="stat-card">
         <div class="stat-icon blue"><i class="bi bi-bank"></i></div>
         <div class="stat-label">Closing Balance <span class="font-urdu">اختتامی بیلنس</span></div>
         <div class="stat-value" style="color: var(--info); font-size: 2.1rem;">{{ number_format($closingBalance ?? 0, 3) }} <small>g</small></div>
-        <div class="stat-sub positive">This should match physical stock</div>
+        <div class="stat-sub positive">Opening + Received - Given</div>
     </div>
 </div>
 
+<!-- Updated Formula Box -->
 <div class="formula-box">
-    <strong>Formula (Fixed):</strong> Closing = Opening ({{ number_format($inventory->opening_balance ?? 0, 3) }}g) 
-    + Received ({{ number_format($totalReceived ?? 0, 3) }}g) 
+    <strong>✅ Correct Formula:</strong><br>
+    Closing = Opening ({{ number_format($inventory->opening_balance ?? 0, 3) }}g) 
+    + Receipts ({{ number_format($receiptKhalis ?? 0, 3) }}g) 
+    + Invoice Receives ({{ number_format($invoiceReceivedKhalis ?? 0, 3) }}g)
+    + Invoice Internal ({{ number_format($invoiceInternalReceived ?? 0, 3) }}g)
     - Given ({{ number_format($givenWeight ?? 0, 3) }}g)<br><br>
-    <strong style="color:#4ade80">Gold Receipts are now fully reflected in inventory.</strong>
+    <strong style="color:#4ade80">✨ Now includes total_received_khalis from invoices!</strong>
 </div>
 
 <!-- Recent Movement -->
@@ -192,10 +210,10 @@
         <tbody>
             @forelse($recentReceipts as $r)
             <tr>
-                <td>{{ $r->receipt_date->format('d/m/Y') }}</td>
+                <td>{{ $r->receipt_date?->format('d/m/Y') ?? '-' }}</td>
                 <td><strong>RCV-{{ str_pad($r->id,5,'0',STR_PAD_LEFT) }}</strong></td>
-                <td>{{ $r->customer?->name }}</td>
-                <td class="positive" style="text-align:right">+{{ number_format($r->total_khalis_weight,3) }}g</td>
+                <td>{{ $r->customer?->name ?? 'N/A' }}</td>
+                <td class="positive" style="text-align:right">+{{ number_format($r->total_khalis_weight ?? 0, 3) }}g</td>
             </tr>
             @empty
             <tr><td colspan="4" style="text-align:center;padding:30px;color:#666">No receipts found</td></tr>
@@ -211,18 +229,20 @@
                 <th>Invoice</th>
                 <th>Party</th>
                 <th style="text-align:right">Effective Gold</th>
+                <th style="text-align:right">Received Khalis</th>
             </tr>
         </thead>
         <tbody>
             @forelse($recentInvoices as $inv)
             <tr>
-                <td>{{ $inv->invoice_date->format('d/m/Y') }}</td>
+                <td>{{ $inv->invoice_date?->format('d/m/Y') ?? '-' }}</td>
                 <td><strong>INV-{{ str_pad($inv->id,5,'0',STR_PAD_LEFT) }}</strong></td>
-                <td>{{ $inv->customer?->name }}</td>
-                <td class="negative" style="text-align:right">-{{ number_format($inv->effective_gold ?? 0,3) }}g</td>
+                <td>{{ $inv->customer?->name ?? 'N/A' }}</td>
+                <td class="negative" style="text-align:right">-{{ number_format($inv->effective_gold ?? 0, 3) }}g</td>
+                <td class="positive" style="text-align:right">+{{ number_format($inv->total_received_khalis ?? 0, 3) }}g</td>
             </tr>
             @empty
-            <tr><td colspan="4" style="text-align:center;padding:30px;color:#666">No invoices found</td></tr>
+            <tr><td colspan="5" style="text-align:center;padding:30px;color:#666">No invoices found</td></tr>
             @endforelse
         </tbody>
     </table>

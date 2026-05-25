@@ -84,4 +84,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/sync-status', [SyncStatusController::class, 'index'])->name('sync.status');
 
     Route::post('logout', [WebLoginController::class, 'logout'])->name('logout');
+
+    // Customer balance API endpoint
+Route::get('/customers/{id}/last-balance', [InvoiceController::class, 'customerLastBalance']);
 });

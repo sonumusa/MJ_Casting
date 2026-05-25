@@ -84,7 +84,7 @@ class Customer extends Model
 
         // Sort by date, then by id for consistent ordering
         usort($transactions, function ($a, $b) {
-            $dateCompare = $a['date']->compare($b['date']);
+            $dateCompare = $a['date']->timestamp <=> $b['date']->timestamp;
             if ($dateCompare !== 0) {
                 return $dateCompare;
             }

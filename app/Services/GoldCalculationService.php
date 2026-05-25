@@ -9,190 +9,161 @@ class GoldCalculationService
 {
     /**
      * Calculate all invoice fields from input
+     * 
+     * Calculation Flow:
+     * 1. Waste Weight = Casting Weight ÷ 10 × Ratti Deduction Rate
+     * 2. Total Weight = Casting Weight + Waste Weight
+     * 3. Male Waste = Total Weight ÷ 96 × Ratti
+     * 4. Gold Khalis = Total Weight - Male Waste
+     * 5. Effective Gold = Gold Khalis + RP Mazdori Weight + Casting Mazdori Weight
+     * 6. Grand Total = Effective Gold (in grams)
+     * 7. Remaining Balance = Previous Balance + Effective Gold - Wasooli - Total Received Khalis
      */
     public function calculate(array $input): array
     {
-        $rattiTiers = \App\Models\Setting::getSetting('ratti_tiers', []);
-
-        // 1. Inputs
+        // Parse inputs
         $castingWeight = $this->parseDecimal($input['casting_weight'] ?? 0);
-        $wasteWeight = $this->parseDecimal($input['waste_weight'] ?? 0);
+        $ratti = $this->parseDecimal($input['ratti'] ?? 0);
         $rattiRate = $this->parseDecimal($input['ratti_rate'] ?? 0);
         $rpRate = $this->parseDecimal($input['rp_rate'] ?? 0);
         $rpMazdoriWeight = $this->parseDecimal($input['rp_mazdori_weight'] ?? 0);
+        $rpMazdoriRate = $this->parseDecimal($input['rp_mazdori_rate'] ?? 0);
         $castingMazdoriWeight = $this->parseDecimal($input['casting_mazdori_weight'] ?? 0);
+        $castingMazdoriRate = $this->parseDecimal($input['casting_mazdori_rate'] ?? 0);
         $wasooli = $this->parseDecimal($input['wasooli'] ?? 0);
         $previousBalance = $this->parseDecimal($input['previous_balance'] ?? 0);
         $totalReceivedKhalis = $this->parseDecimal($input['total_received_khalis'] ?? 0);
 
-        if (!empty($input['waste_auto'])) {
-            $wasteRate = $this->parseDecimal(
-                $input['ratti_rate'] ?? \App\Models\Setting::getSetting('default_ratti_rate', 0)
-            );
-            $wasteWeight = round($castingWeight / 10 * $wasteRate, 3);
+        // Step 1: Calculate Waste Weight
+        // Formula: Casting Weight ÷ 10 × Ratti Deduction Rate (g)
+        $wasteWeight = 0;
+        if ($castingWeight > 0 && $rattiRate > 0) {
+            $wasteWeight = round(($castingWeight / 10) * $rattiRate, 3);
         }
 
-        // Step 1: total_weight is the gold remaining after waste deduction
-        $totalWeight = round($castingWeight - $wasteWeight, 3);
+        // Step 2: Calculate Total Weight
+        // Formula: Casting Weight + Waste Weight
+        $totalWeight = round($castingWeight + $wasteWeight, 3);
 
-        // Step 2: ratti auto-calculation
-        $ratti = $this->parseDecimal($input['ratti'] ?? 0);
-        $rattiTierApplied = '';
-        if (!empty($input['ratti_auto'])) {
-            $ratti = 0.5; // Default fallback
-            $rattiTierApplied = 'Default > last tier';
-            foreach ($rattiTiers as $tier) {
-                if ($totalWeight <= $tier['max_weight']) {
-                    $ratti = (float) $tier['ratti'];
-                    $rattiTierApplied = "Total <= {$tier['max_weight']}";
-                    break;
-                }
-            }
+        // Step 3: Calculate Male Waste
+        // Formula: Total Weight ÷ 96 × Ratti
+        $maleWaste = 0;
+        if ($totalWeight > 0 && $ratti > 0) {
+            $maleWaste = round(($totalWeight / 96) * $ratti, 3);
         }
 
-        // Step 3: male_waste = round(total_weight / 96 * ratti, 3)
-        $maleWaste = $this->parseDecimal($input['male_waste'] ?? 0);
-        if (!empty($input['male_waste_auto'])) {
-            $maleWaste = round($totalWeight / 96 * $ratti, 3);
-        }
-
-        // Step 4: gold_khalis = round(total_weight - male_waste, 3)
+        // Step 4: Calculate Gold Khalis
+        // Formula: Total Weight - Male Waste
         $goldKhalis = round($totalWeight - $maleWaste, 3);
 
-        // Step 5: rp_amount = round(gold_khalis × rp_rate, 2) [DISPLAY ONLY]
+        // Step 5: Calculate RP Amount (Display Only - for monetary reference)
         $rpAmount = round($goldKhalis * $rpRate, 2);
 
-        // Step 6: rp_mazdori_amount = round(rp_mazdori_weight × rp_mazdori_rate, 2) [DISPLAY ONLY]
-        $rpMazdoriRate = $this->parseDecimal($input['rp_mazdori_rate'] ?? 0);
+        // Step 6: Calculate RP Mazdori Amount (Display Only)
         $rpMazdoriAmount = round($rpMazdoriWeight * $rpMazdoriRate, 2);
 
-        // Step 7: casting_mazdori_amount = round(casting_mazdori_weight × casting_mazdori_rate, 2) [DISPLAY ONLY]
-        $castingMazdoriRate = $this->parseDecimal($input['casting_mazdori_rate'] ?? 0);
+        // Step 7: Calculate Casting Mazdori Amount (Display Only)
         $castingMazdoriAmount = round($castingMazdoriWeight * $castingMazdoriRate, 2);
 
-        // Step 8: effective_gold = round(gold_khalis + rp_mazdori_weight + casting_mazdori_weight, 3)
+        // Step 8: Calculate Effective Gold (Total Gold Given to Party)
+        // Formula: Gold Khalis + RP Mazdori Weight + Casting Mazdori Weight
         $effectiveGold = round($goldKhalis + $rpMazdoriWeight + $castingMazdoriWeight, 3);
 
-        // Step 9: grand_total = round(effective_gold, 3) — grams total out of inventory
+        // Step 9: Grand Total (Total Gold Out in grams)
         $grandTotal = round($effectiveGold, 3);
 
-        // Step 10: remaining_balance = round(previous_balance + grand_total - wasooli - total_received_khalis, 3)
-        // If party gives gold (received), it reduces their balance
-        $remainingBalance = round($previousBalance + $effectiveGold - $wasooli - $totalReceivedKhalis, 3);
+        // Step 10: Calculate Remaining Balance
+        // Formula: Previous Balance + Effective Gold - Wasooli - Total Received Khalis
+        $remainingBalance = round(
+            $previousBalance + $effectiveGold - $wasooli - $totalReceivedKhalis, 
+            3
+        );
 
         return [
-            'total_weight' => $totalWeight,
+            // Input values (preserved)
+            'casting_weight' => $castingWeight,
             'ratti' => $ratti,
-            'ratti_auto' => !empty($input['ratti_auto']),
-            'ratti_tier_applied' => $rattiTierApplied,
-            'male_waste' => $maleWaste,
-            'male_waste_auto' => !empty($input['male_waste_auto']),
-            'gold_khalis' => $goldKhalis,
+            'ratti_rate' => $rattiRate,
+            'rp_rate' => $rpRate,
+            'rp_mazdori_weight' => $rpMazdoriWeight,
+            'rp_mazdori_rate' => $rpMazdoriRate,
+            'casting_mazdori_weight' => $castingMazdoriWeight,
+            'casting_mazdori_rate' => $castingMazdoriRate,
+            'wasooli' => $wasooli,
+            'previous_balance' => $previousBalance,
             'total_received_khalis' => $totalReceivedKhalis,
+            
+            // Calculated values
+            'waste_weight' => $wasteWeight,
+            'total_weight' => $totalWeight,
+            'male_waste' => $maleWaste,
+            'gold_khalis' => $goldKhalis,
             'rp_amount' => $rpAmount,
             'rp_mazdori_amount' => $rpMazdoriAmount,
             'casting_mazdori_amount' => $castingMazdoriAmount,
             'effective_gold' => $effectiveGold,
             'grand_total' => $grandTotal,
             'remaining_balance' => $remainingBalance,
-            'waste_weight' => $wasteWeight,
-            'waste_auto' => !empty($input['waste_auto']),
         ];
     }
 
     /**
      * Convert impure gold gross weight to khalis pure gold using ratti formula
-     * Formula: gross_weight - (gross_weight / 96 * ratti_impurity)
+     * Formula: gross_weight - (gross_weight ÷ 96 × ratti_impurity)
+     * 
+     * @param float $grossWeight Total weight including impurities
+     * @param float $rattiImpurity Ratti impurity level
+     * @return float Pure gold weight (khalis)
      */
     public function convertToKhalis(float $grossWeight, float $rattiImpurity): float
     {
-        if ($grossWeight <= 0) return 0;
-        return round($grossWeight - (($grossWeight / 96) * $rattiImpurity), 3);
-    }
-
-    /**
-     * Calculate grand total
-     */
-    public function calculateGrandTotal(
-        float $effectiveGold,
-        float $rpRate
-    ): float {
-        return round($effectiveGold, 3);
-    }
-
-    /**
-     * Calculate effective gold
-     */
-    public function calculateEffectiveGold(
-        float $goldKhalis,
-        float $rpMazdoriWeight,
-        float $castingMazdoriWeight
-    ): float {
-        return $goldKhalis + $rpMazdoriWeight + $castingMazdoriWeight;
-    }
-
-    /**
-     * Calculate male waste (ratti deduction)
-     */
-    public function calculateMaleWaste(float $totalWeight, float $ratti, float $rattiRate): float
-    {
-        return round($totalWeight / 96 * $ratti, 3);
-    }
-
-    /**
-     * Calculate gold khalis
-     */
-    public function calculateGoldKhalis(float $totalWeight, float $maleWaste): float
-    {
-        return $totalWeight - $maleWaste;
-    }
-
-    /**
-     * Calculate remaining balance
-     */
-    public function calculateRemainingBalance(float $previousBalance, float $effectiveGold, float $wasooli, float $totalReceivedKhalis = 0): float
-    {
-        return $previousBalance + $effectiveGold - $wasooli - $totalReceivedKhalis;
+        if ($grossWeight <= 0) {
+            return 0;
+        }
+        
+        $khalis = $grossWeight - (($grossWeight / 96) * $rattiImpurity);
+        return round($khalis, 3);
     }
 
     /**
      * Recalculate balance chain for a customer's invoices
      * Used when an invoice is edited or deleted
+     * 
+     * @param Customer $customer
+     * @param int|null $fromInvoiceId Start recalculation from this invoice (optional)
      */
-    public function recalculateChain($customer, $fromInvoiceId = null): void
+    public function recalculateChain(Customer $customer, ?int $fromInvoiceId = null): void
     {
+        // Get all active invoices for customer in chronological order
         $invoices = $customer->invoices()
             ->where('status', 'active')
             ->orderBy('invoice_date')
             ->orderBy('id')
             ->get();
 
+        // Start with customer's opening balance
         $runningBalance = $customer->opening_balance;
 
         foreach ($invoices as $invoice) {
-            $invoice->update([
-                'previous_balance' => $runningBalance,
-                'remaining_balance' => $runningBalance + $invoice->effective_gold - $invoice->wasooli - $invoice->total_received_khalis,
-            ]);
+            // Update previous balance
+            $invoice->previous_balance = $runningBalance;
 
+            // Recalculate remaining balance
+            // Formula: Previous Balance + Effective Gold - Wasooli - Total Received Khalis
+            $invoice->remaining_balance = round(
+                $runningBalance 
+                + $invoice->effective_gold 
+                - $invoice->wasooli 
+                - $invoice->total_received_khalis,
+                3
+            );
+
+            // Save without triggering events
+            $invoice->saveQuietly();
+
+            // Update running balance for next invoice
             $runningBalance = $invoice->remaining_balance;
         }
-    }
-
-    /**
-     * Get mazdori amounts for display
-     */
-    public function getMazdoriAmounts(array $input): array
-    {
-        $rpMazdoriWeight = $this->parseDecimal($input['rp_mazdori_weight'] ?? 0);
-        $rpMazdoriRate = $this->parseDecimal($input['rp_mazdori_rate'] ?? 0);
-        $castingMazdoriWeight = $this->parseDecimal($input['casting_mazdori_weight'] ?? 0);
-        $castingMazdoriRate = $this->parseDecimal($input['casting_mazdori_rate'] ?? 0);
-
-        return [
-            'rp_mazdori_amount' => $this->multiply($rpMazdoriWeight, $rpMazdoriRate),
-            'casting_mazdori_amount' => $this->multiply($castingMazdoriWeight, $castingMazdoriRate),
-        ];
     }
 
     /**
@@ -204,30 +175,6 @@ class GoldCalculationService
             return 0;
         }
         return (float) $value;
-    }
-
-    /**
-     * Helper: Add two decimals
-     */
-    private function add(float $a, float $b): float
-    {
-        return round($a + $b, 3);
-    }
-
-    /**
-     * Helper: Subtract two decimals
-     */
-    private function subtract(float $a, float $b): float
-    {
-        return round($a - $b, 3);
-    }
-
-    /**
-     * Helper: Multiply two decimals
-     */
-    public function multiply(float $a, float $b): float
-    {
-        return round($a * $b, 2);
     }
 
     /**

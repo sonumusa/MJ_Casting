@@ -7,7 +7,6 @@ use App\Models\Invoice;
 use App\Models\InvoiceReceive;
 use App\Models\Setting;
 use App\Services\GoldCalculationService;
-use App\Services\InvoiceService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Contracts\View\View;
@@ -19,17 +18,15 @@ use Illuminate\Support\Facades\Log;
 class InvoiceController extends Controller
 {
     private GoldCalculationService $calcService;
-    private InvoiceService $invoiceService;
 
-    public function __construct(GoldCalculationService $calcService, InvoiceService $invoiceService)
+    public function __construct(GoldCalculationService $calcService)
     {
         $this->calcService = $calcService;
-        $this->invoiceService = $invoiceService;
     }
 
-    /* ─────────────────────────────────────────────────────────
-     | INDEX
-     ───────────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════
+     * INDEX - List all invoices
+     * ═══════════════════════════════════════════════════════════ */
     public function index(Request $request): View
     {
         $query = Invoice::with('customer')->where('status', 'active');
@@ -61,31 +58,32 @@ class InvoiceController extends Controller
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
-        } else {
-            $query->where('status', 'active');
         }
 
-        $invoices = $query->latest('invoice_date')->latest('id')->paginate(25)->withQueryString();
+        $invoices = $query->latest('invoice_date')
+                          ->latest('id')
+                          ->paginate(25)
+                          ->withQueryString();
+        
         $customers = Customer::orderBy('name')->get();
 
         return view('pages.invoices.index', compact('invoices', 'customers'));
     }
 
-    /* ─────────────────────────────────────────────────────────
-     | CREATE
-     ───────────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════
+     * CREATE - Show invoice creation form
+     * ═══════════════════════════════════════════════════════════ */
     public function create(): View
     {
         $customers = Customer::orderBy('name')->get();
-        $calcSettings = $this->getCalcSettings();
         $nextInvoiceNo = $this->generateInvoiceNo();
 
-        return view('pages.invoices.create', compact('customers', 'calcSettings', 'nextInvoiceNo'));
+        return view('pages.invoices.create', compact('customers', 'nextInvoiceNo'));
     }
 
-    /* ─────────────────────────────────────────────────────────
-     | STORE
-     ───────────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════
+     * STORE - Save new invoice
+     * ═══════════════════════════════════════════════════════════ */
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validateInvoice($request);
@@ -93,62 +91,123 @@ class InvoiceController extends Controller
         try {
             DB::beginTransaction();
 
-            // Calculate total received khalis from dynamic rows
+            // Calculate total received khalis from dynamic receive rows
             $totalReceivedKhalis = 0;
             $receivesData = [];
+            
             if (!empty($request->input('receives'))) {
                 foreach ($request->input('receives') as $receive) {
                     $gross = (float) ($receive['gross_weight'] ?? 0);
                     $ratti = (float) ($receive['ratti_impurity'] ?? 0);
-                    $khalis = $this->calcService->convertToKhalis($gross, $ratti);
-                    $totalReceivedKhalis += $khalis;
-                    $receivesData[] = [
-                        'description' => $receive['description'] ?? null,
-                        'gross_weight' => $gross,
-                        'ratti_impurity' => $ratti,
-                        'khalis_weight' => $khalis,
-                    ];
+                    
+                    if ($gross > 0) {
+                        $khalis = $this->calcService->convertToKhalis($gross, $ratti);
+                        $totalReceivedKhalis += $khalis;
+                        
+                        $receivesData[] = [
+                            'description' => $receive['description'] ?? null,
+                            'gross_weight' => $gross,
+                            'ratti_impurity' => $ratti,
+                            'khalis_weight' => $khalis,
+                        ];
+                    }
                 }
             }
-            $validated['total_received_khalis'] = round($totalReceivedKhalis, 3);
+            
+            $totalReceivedKhalis = round($totalReceivedKhalis, 3);
+            $validated['total_received_khalis'] = $totalReceivedKhalis;
 
-            // Server-side gold calculation
+            // Get previous balance from customer's last invoice
+            $previousBalance = $this->getPreviousBalance($validated['customer_id']);
+            $validated['previous_balance'] = $previousBalance;
+
+            // Server-side gold calculation for verification
             $calculations = $this->calcService->calculate($validated);
 
-            $invoiceData = array_merge($validated, $calculations, [
+            // Prepare invoice data
+            $invoiceData = [
                 'invoice_no' => $this->generateInvoiceNo(),
-                'created_by' => Auth::id(),
+                'invoice_type' => $validated['invoice_type'],
+                'customer_id' => $validated['customer_id'],
+                'invoice_date' => $validated['invoice_date'],
+                'manual_book_no' => $validated['manual_book_no'] ?? null,
+                
+                // Gold calculation fields
+                'casting_weight' => $calculations['casting_weight'],
+                'ratti' => $calculations['ratti'],
+                'ratti_rate' => $calculations['ratti_rate'],
+                'waste_weight' => $calculations['waste_weight'],
+                'total_weight' => $calculations['total_weight'],
+                'male_waste' => $calculations['male_waste'],
+                'gold_khalis' => $calculations['gold_khalis'],
+                
+                // Mazdori fields
+                'rp_mazdori_weight' => $calculations['rp_mazdori_weight'],
+                'rp_mazdori_rate' => $calculations['rp_mazdori_rate'],
+                'rp_mazdori_amount' => $calculations['rp_mazdori_amount'],
+                'casting_mazdori_weight' => $calculations['casting_mazdori_weight'],
+                'casting_mazdori_rate' => $calculations['casting_mazdori_rate'],
+                'casting_mazdori_amount' => $calculations['casting_mazdori_amount'],
+                
+                // Rate and amounts
+                'rp_rate' => $calculations['rp_rate'],
+                'rp_amount' => $calculations['rp_amount'],
+                'effective_gold' => $calculations['effective_gold'],
+                'grand_total' => $calculations['grand_total'],
+                
+                // Balance fields
+                'total_received_khalis' => $totalReceivedKhalis,
+                'wasooli' => $calculations['wasooli'],
+                'previous_balance' => $previousBalance,
+                'remaining_balance' => $calculations['remaining_balance'],
+                
+                // Meta fields
+                'remarks' => $validated['remarks'] ?? null,
                 'status' => 'active',
-            ]);
+                'created_by' => Auth::id(),
+            ];
 
+            // Create invoice
             $invoice = Invoice::create($invoiceData);
 
             // Create receive rows
             foreach ($receivesData as $rec) {
-                $rec['invoice_id'] = $invoice->id;
-                InvoiceReceive::create($rec);
+                $invoice->receives()->create($rec);
             }
+
+            // Recalculate balance chain for customer
+            $customer = Customer::find($validated['customer_id']);
+            $this->calcService->recalculateChain($customer);
 
             DB::commit();
 
+            // Determine redirect based on action
+            if ($request->input('action') === 'print') {
+                return redirect()
+                    ->route('invoices.print', $invoice)
+                    ->with('success', "Invoice {$invoice->invoice_no} created successfully.");
+            }
+
             return redirect()
                 ->route('invoices.show', $invoice)
-                ->with('success', "Invoice {$invoice->invoice_no} created successfully.")
-                ->with('print_invoice_id', $invoice->id);
+                ->with('success', "Invoice {$invoice->invoice_no} created successfully.");
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Invoice store failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            Log::error('Invoice store failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return back()
                 ->withInput()
-                ->with('error', 'Failed to save invoice. ' . $e->getMessage());
+                ->with('error', 'Failed to save invoice: ' . $e->getMessage());
         }
     }
 
-    /* ─────────────────────────────────────────────────────────
-     | SHOW
-     ───────────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════
+     * SHOW - Display invoice details
+     * ═══════════════════════════════════════════════════════════ */
     public function show(Invoice $invoice): View
     {
         $invoice->load('customer', 'receives');
@@ -157,22 +216,21 @@ class InvoiceController extends Controller
         return view('pages.invoices.show', compact('invoice', 'breakdown'));
     }
 
-    /* ─────────────────────────────────────────────────────────
-     | EDIT
-     ───────────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════
+     * EDIT - Show invoice edit form
+     * ═══════════════════════════════════════════════════════════ */
     public function edit(Invoice $invoice): View
     {
         $invoice->load('customer', 'receives');
         $customers = Customer::orderBy('name')->get();
-        $calcSettings = $this->getCalcSettings();
         $breakdown = $this->buildCalculationBreakdown($invoice);
 
-        return view('pages.invoices.edit', compact('invoice', 'customers', 'calcSettings', 'breakdown'));
+        return view('pages.invoices.edit', compact('invoice', 'customers', 'breakdown'));
     }
 
-    /* ─────────────────────────────────────────────────────────
-     | UPDATE
-     ───────────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════
+     * UPDATE - Update existing invoice
+     * ═══════════════════════════════════════════════════════════ */
     public function update(Request $request, Invoice $invoice): RedirectResponse
     {
         $validated = $this->validateInvoice($request, $invoice);
@@ -180,74 +238,135 @@ class InvoiceController extends Controller
         try {
             DB::beginTransaction();
 
-            // Calculate total received khalis from dynamic rows
+            // Calculate total received khalis from dynamic receive rows
             $totalReceivedKhalis = 0;
             $receivesData = [];
+            
             if (!empty($request->input('receives'))) {
                 foreach ($request->input('receives') as $receive) {
                     $gross = (float) ($receive['gross_weight'] ?? 0);
                     $ratti = (float) ($receive['ratti_impurity'] ?? 0);
-                    $khalis = $this->calcService->convertToKhalis($gross, $ratti);
-                    $totalReceivedKhalis += $khalis;
-                    $receivesData[] = [
-                        'description' => $receive['description'] ?? null,
-                        'gross_weight' => $gross,
-                        'ratti_impurity' => $ratti,
-                        'khalis_weight' => $khalis,
-                    ];
+                    
+                    if ($gross > 0) {
+                        $khalis = $this->calcService->convertToKhalis($gross, $ratti);
+                        $totalReceivedKhalis += $khalis;
+                        
+                        $receivesData[] = [
+                            'description' => $receive['description'] ?? null,
+                            'gross_weight' => $gross,
+                            'ratti_impurity' => $ratti,
+                            'khalis_weight' => $khalis,
+                        ];
+                    }
                 }
             }
-            $validated['total_received_khalis'] = round($totalReceivedKhalis, 3);
+            
+            $totalReceivedKhalis = round($totalReceivedKhalis, 3);
+            $validated['total_received_khalis'] = $totalReceivedKhalis;
 
+            // Get previous balance (from last invoice before this one if customer changed)
+            $previousBalance = $this->getPreviousBalance(
+                $validated['customer_id'], 
+                $invoice->id
+            );
+            $validated['previous_balance'] = $previousBalance;
+
+            // Server-side gold calculation
             $calculations = $this->calcService->calculate($validated);
 
-            $invoiceData = array_merge($validated, $calculations);
+            // Update invoice
+            $invoice->update([
+                'invoice_type' => $validated['invoice_type'],
+                'customer_id' => $validated['customer_id'],
+                'invoice_date' => $validated['invoice_date'],
+                'manual_book_no' => $validated['manual_book_no'] ?? null,
+                
+                // Gold calculation fields
+                'casting_weight' => $calculations['casting_weight'],
+                'ratti' => $calculations['ratti'],
+                'ratti_rate' => $calculations['ratti_rate'],
+                'waste_weight' => $calculations['waste_weight'],
+                'total_weight' => $calculations['total_weight'],
+                'male_waste' => $calculations['male_waste'],
+                'gold_khalis' => $calculations['gold_khalis'],
+                
+                // Mazdori fields
+                'rp_mazdori_weight' => $calculations['rp_mazdori_weight'],
+                'rp_mazdori_rate' => $calculations['rp_mazdori_rate'],
+                'rp_mazdori_amount' => $calculations['rp_mazdori_amount'],
+                'casting_mazdori_weight' => $calculations['casting_mazdori_weight'],
+                'casting_mazdori_rate' => $calculations['casting_mazdori_rate'],
+                'casting_mazdori_amount' => $calculations['casting_mazdori_amount'],
+                
+                // Rate and amounts
+                'rp_rate' => $calculations['rp_rate'],
+                'rp_amount' => $calculations['rp_amount'],
+                'effective_gold' => $calculations['effective_gold'],
+                'grand_total' => $calculations['grand_total'],
+                
+                // Balance fields
+                'total_received_khalis' => $totalReceivedKhalis,
+                'wasooli' => $calculations['wasooli'],
+                'previous_balance' => $previousBalance,
+                'remaining_balance' => $calculations['remaining_balance'],
+                
+                // Meta fields
+                'remarks' => $validated['remarks'] ?? null,
+                'updated_by' => Auth::id(),
+            ]);
 
-            $invoice->update($invoiceData);
-
-            // Sync receive rows: delete old, recreate
+            // Sync receive rows: delete old, create new
             $invoice->receives()->delete();
             foreach ($receivesData as $rec) {
-                $rec['invoice_id'] = $invoice->id;
-                InvoiceReceive::create($rec);
+                $invoice->receives()->create($rec);
             }
 
-            $this->recalculateBalanceChain($invoice->customer_id, $invoice->id);
+            // Recalculate balance chain
+            $customer = Customer::find($validated['customer_id']);
+            $this->calcService->recalculateChain($customer);
 
             DB::commit();
 
             return redirect()
                 ->route('invoices.show', $invoice)
-                ->with('success', "Invoice {$invoice->invoice_no} updated successfully.")
-                ->with('print_invoice_id', $invoice->id);
+                ->with('success', "Invoice {$invoice->invoice_no} updated successfully.");
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Invoice update failed', ['id' => $invoice->id, 'error' => $e->getMessage()]);
+            Log::error('Invoice update failed', [
+                'id' => $invoice->id,
+                'error' => $e->getMessage()
+            ]);
 
             return back()
                 ->withInput()
-                ->with('error', 'Failed to update invoice. ' . $e->getMessage());
+                ->with('error', 'Failed to update invoice: ' . $e->getMessage());
         }
     }
 
-    /* ─────────────────────────────────────────────────────────
-     | DESTROY (soft delete)
-     ───────────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════
+     * DESTROY - Soft delete invoice
+     * ═══════════════════════════════════════════════════════════ */
     public function destroy(Invoice $invoice): RedirectResponse
     {
         try {
             DB::beginTransaction();
 
             $customerId = $invoice->customer_id;
-            $invoiceId = $invoice->id;
             $invoiceNo = $invoice->invoice_no;
 
+            // Delete receive rows
             $invoice->receives()->delete();
+            
+            // Soft delete invoice
             $invoice->update(['status' => 'cancelled']);
-            $invoice->delete(); // soft delete
+            $invoice->delete();
 
-            $this->recalculateBalanceChain($customerId, $invoiceId);
+            // Recalculate balance chain
+            $customer = Customer::find($customerId);
+            if ($customer) {
+                $this->calcService->recalculateChain($customer);
+            }
 
             DB::commit();
 
@@ -257,20 +376,23 @@ class InvoiceController extends Controller
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Invoice delete failed', ['id' => $invoice->id, 'error' => $e->getMessage()]);
+            Log::error('Invoice delete failed', [
+                'id' => $invoice->id,
+                'error' => $e->getMessage()
+            ]);
 
-            return back()->with('error', 'Failed to delete invoice. ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete invoice: ' . $e->getMessage());
         }
     }
 
-    /* ─────────────────────────────────────────────────────────
-     | PRINT
-     ───────────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════
+     * PRINT - Generate printable invoice
+     * ═══════════════════════════════════════════════════════════ */
     public function print(Request $request, Invoice $invoice): View
     {
         $invoice->load('customer', 'receives');
 
-        $format = $request->query('format', 'slip'); // slip | a5 | a4
+        $format = $request->query('format', 'slip');
         $breakdown = $this->buildCalculationBreakdown($invoice);
 
         $workshopSettings = [
@@ -288,9 +410,9 @@ class InvoiceController extends Controller
         return view('pages.invoices.print', compact('invoice', 'format', 'breakdown', 'workshopSettings'));
     }
 
-    /* ─────────────────────────────────────────────────────────
-     | EXPORT CSV
-     ───────────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════
+     * EXPORT - Export invoices to CSV
+     * ═══════════════════════════════════════════════════════════ */
     public function export(Request $request): Response
     {
         $query = Invoice::with('customer')->where('status', 'active');
@@ -318,30 +440,14 @@ class InvoiceController extends Controller
             $file = fopen('php://output', 'w');
 
             fputcsv($file, [
-                'Invoice No',
-                'Book No',
-                'Date',
-                'Type',
-                'Customer',
-                'Casting (g)',
-                'Waste (g)',
-                'Total Weight (g)',
-                'Ratti',
-                'Ratti Rate',
-                'Male Waste (g)',
-                'Gold Khalis (g)',
-                'Received Khalis (g)',
-                'RP Rate',
-                'RP Amount',
-                'RP Mazdori Wt',
-                'Casting Mazdori Wt',
-                'Effective Gold',
-                'Grand Total',
-                'Wasooli',
-                'Previous Balance',
-                'Remaining Balance',
-                'Remarks',
-                'Status',
+                'Invoice No', 'Book No', 'Date', 'Type', 'Customer',
+                'Casting (g)', 'Ratti', 'Ratti Rate', 'Waste (g)',
+                'Total Weight (g)', 'Male Waste (g)', 'Gold Khalis (g)',
+                'RP Rate', 'RP Amount', 'RP Mazdori Wt (g)', 'RP Mazdori Amt',
+                'Casting Mazdori Wt (g)', 'Casting Mazdori Amt',
+                'Effective Gold (g)', 'Grand Total (g)', 'Received Khalis (g)',
+                'Wasooli (g)', 'Previous Balance (g)', 'Remaining Balance (g)',
+                'Remarks', 'Status',
             ]);
 
             foreach ($invoices as $inv) {
@@ -351,23 +457,25 @@ class InvoiceController extends Controller
                     $inv->invoice_date->format('Y-m-d'),
                     $inv->invoice_type,
                     $inv->customer?->name,
-                    number_format($inv->casting_weight, 3),
-                    number_format($inv->waste_weight, 3),
-                    number_format($inv->total_weight, 3),
-                    number_format($inv->ratti, 2),
-                    number_format($inv->ratti_rate, 3),
-                    number_format($inv->male_waste, 3),
-                    number_format($inv->gold_khalis, 3),
-                    number_format($inv->total_received_khalis, 3),
-                    number_format($inv->rp_rate, 2),
-                    number_format($inv->rp_amount, 2),
-                    number_format($inv->rp_mazdori_weight, 3),
-                    number_format($inv->casting_mazdori_weight, 3),
-                    number_format($inv->effective_gold, 3),
-                    number_format($inv->grand_total, 3),
-                    number_format($inv->wasooli, 3),
-                    number_format($inv->previous_balance, 3),
-                    number_format($inv->remaining_balance, 3),
+                    number_format($inv->casting_weight, 3, '.', ''),
+                    number_format($inv->ratti, 2, '.', ''),
+                    number_format($inv->ratti_rate, 3, '.', ''),
+                    number_format($inv->waste_weight, 3, '.', ''),
+                    number_format($inv->total_weight, 3, '.', ''),
+                    number_format($inv->male_waste, 3, '.', ''),
+                    number_format($inv->gold_khalis, 3, '.', ''),
+                    number_format($inv->rp_rate, 2, '.', ''),
+                    number_format($inv->rp_amount, 2, '.', ''),
+                    number_format($inv->rp_mazdori_weight, 3, '.', ''),
+                    number_format($inv->rp_mazdori_amount, 2, '.', ''),
+                    number_format($inv->casting_mazdori_weight, 3, '.', ''),
+                    number_format($inv->casting_mazdori_amount, 2, '.', ''),
+                    number_format($inv->effective_gold, 3, '.', ''),
+                    number_format($inv->grand_total, 3, '.', ''),
+                    number_format($inv->total_received_khalis, 3, '.', ''),
+                    number_format($inv->wasooli, 3, '.', ''),
+                    number_format($inv->previous_balance, 3, '.', ''),
+                    number_format($inv->remaining_balance, 3, '.', ''),
                     $inv->remarks,
                     $inv->status,
                 ]);
@@ -379,10 +487,60 @@ class InvoiceController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    /* ─────────────────────────────────────────────────────────
-     | HELPERS
-     ───────────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════
+     * API: Get Customer Last Balance (for AJAX)
+     * ═══════════════════════════════════════════════════════════ */
+    public function customerLastBalance($customerId): Response
+    {
+        $customer = Customer::find($customerId);
+        
+        if (!$customer) {
+            return response()->json(['balance' => 0], 404);
+        }
 
+        $lastInvoice = $customer->invoices()
+            ->where('status', 'active')
+            ->latest('invoice_date')
+            ->latest('id')
+            ->first();
+
+        $balance = $lastInvoice?->remaining_balance ?? $customer->opening_balance;
+
+        return response()->json(['balance' => $balance]);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+     * HELPER METHODS
+     * ═══════════════════════════════════════════════════════════ */
+
+    /**
+     * Get previous balance for a customer
+     */
+    private function getPreviousBalance(int $customerId, ?int $excludeInvoiceId = null): float
+    {
+        $customer = Customer::find($customerId);
+        
+        if (!$customer) {
+            return 0;
+        }
+
+        $query = $customer->invoices()
+            ->where('status', 'active');
+
+        if ($excludeInvoiceId) {
+            $query->where('id', '!=', $excludeInvoiceId);
+        }
+
+        $lastInvoice = $query->latest('invoice_date')
+                            ->latest('id')
+                            ->first();
+
+        return $lastInvoice?->remaining_balance ?? $customer->opening_balance;
+    }
+
+    /**
+     * Validate invoice input
+     */
     private function validateInvoice(Request $request, ?Invoice $existing = null): array
     {
         $rules = [
@@ -390,117 +548,77 @@ class InvoiceController extends Controller
             'invoice_type' => 'required|in:customer,dukandar,karigar',
             'invoice_date' => 'required|date',
             'manual_book_no' => 'nullable|string|max:50',
+            
+            // Gold calculation inputs
             'casting_weight' => 'required|numeric|min:0',
-            'waste_weight' => 'required|numeric|min:0',
             'ratti' => 'required|numeric|min:0',
             'ratti_rate' => 'required|numeric|min:0',
-            'male_waste' => 'required|numeric|min:0',
-            'gold_khalis' => 'required|numeric|min:0',
-            'rp_rate' => 'required|numeric|min:0',
+            
+            // Mazdori inputs
             'rp_mazdori_weight' => 'nullable|numeric|min:0',
             'rp_mazdori_rate' => 'nullable|numeric|min:0',
             'casting_mazdori_weight' => 'nullable|numeric|min:0',
             'casting_mazdori_rate' => 'nullable|numeric|min:0',
+            
+            // Rate and balance
+            'rp_rate' => 'required|numeric|min:0',
             'wasooli' => 'nullable|numeric|min:0',
-            'previous_balance' => 'nullable|numeric|min:0',
-            'remarks' => 'nullable|string',
+            
+            // Receive rows (optional)
+            'receives' => 'nullable|array',
+            'receives.*.description' => 'nullable|string|max:255',
+            'receives.*.gross_weight' => 'required_with:receives|numeric|min:0',
+            'receives.*.ratti_impurity' => 'required_with:receives|numeric|min:0',
+            'receives.*.khalis_weight' => 'nullable|numeric|min:0',
+            
+            // Meta
+            'remarks' => 'nullable|string|max:1000',
         ];
 
         return $request->validate($rules);
     }
 
-    private function getCalcSettings(): array
-    {
-        return [
-            'default_waste_rate' => Setting::getSetting('default_waste_rate', 0),
-            'default_ratti_rate' => Setting::getSetting('default_ratti_rate', 0),
-            'ratti_tiers' => Setting::getSetting('ratti_tiers', []),
-        ];
-    }
-
+    /**
+     * Generate unique invoice number
+     */
     private function generateInvoiceNo(): string
     {
         $prefix = 'INV';
         $lastInvoice = Invoice::withTrashed()->latest('id')->first();
         $number = ($lastInvoice?->id ?? 0) + 1;
+        
         return $prefix . '-' . str_pad($number, 5, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * Build calculation breakdown for display
+     */
     private function buildCalculationBreakdown(Invoice $invoice): array
     {
         return [
             'steps' => [
-                [
-                    'label' => 'Casting Weight',
-                    'value' => $invoice->casting_weight,
-                    'formula' => 'Input',
-                ],
-                [
-                    'label' => 'Waste Weight',
-                    'value' => $invoice->waste_weight,
-                    'formula' => $invoice->waste_auto ? 'Auto: Casting / 10 × Rate' : 'Manual',
-                ],
-                [
-                    'label' => 'Total Weight',
-                    'value' => $invoice->total_weight,
-                    'formula' => 'Casting + Waste',
-                ],
-                [
-                    'label' => 'Ratti Deduction',
-                    'value' => $invoice->ratti,
-                    'formula' => $invoice->ratti_auto ? 'Auto (Tiered)' : 'Manual',
-                ],
-                [
-                    'label' => 'Male Waste',
-                    'value' => $invoice->male_waste,
-                    'formula' => 'Total / 96 × Ratti',
-                ],
-                [
-                    'label' => 'Gold Khalis',
-                    'value' => $invoice->gold_khalis,
-                    'formula' => 'Total - Male Waste',
-                ],
-                [
-                    'label' => 'Received Khalis',
-                    'value' => $invoice->total_received_khalis,
-                    'formula' => 'Sum of converted rows',
-                ],
-                [
-                    'label' => 'RP Mazdori',
-                    'value' => $invoice->rp_mazdori_weight,
-                    'formula' => 'Input',
-                ],
-                [
-                    'label' => 'Casting Mazdori',
-                    'value' => $invoice->casting_mazdori_weight,
-                    'formula' => 'Input',
-                ],
-                [
-                    'label' => 'Effective Gold',
-                    'value' => $invoice->effective_gold,
-                    'formula' => 'Khalis + Mazdori',
-                ],
-                [
-                    'label' => 'Grand Total',
-                    'value' => $invoice->grand_total,
-                    'formula' => 'Effective Gold',
-                ],
+                ['label' => 'Casting Weight', 'value' => $invoice->casting_weight, 'unit' => 'g', 'formula' => 'Input'],
+                ['label' => 'Ratti', 'value' => $invoice->ratti, 'unit' => '', 'formula' => 'Input'],
+                ['label' => 'Ratti Rate', 'value' => $invoice->ratti_rate, 'unit' => 'g', 'formula' => 'From System Setting'],
+                ['label' => 'Waste Weight', 'value' => $invoice->waste_weight, 'unit' => 'g', 'formula' => 'Casting ÷ 10 × Ratti Rate'],
+                ['label' => 'Total Weight', 'value' => $invoice->total_weight, 'unit' => 'g', 'formula' => 'Casting + Waste'],
+                ['label' => 'Male Waste', 'value' => $invoice->male_waste, 'unit' => 'g', 'formula' => 'Total Weight ÷ 96 × Ratti'],
+                ['label' => 'Gold Khalis', 'value' => $invoice->gold_khalis, 'unit' => 'g', 'formula' => 'Total Weight - Male Waste'],
+                ['label' => 'RP Mazdori Weight', 'value' => $invoice->rp_mazdori_weight, 'unit' => 'g', 'formula' => 'Input'],
+                ['label' => 'Casting Mazdori Weight', 'value' => $invoice->casting_mazdori_weight, 'unit' => 'g', 'formula' => 'Input'],
+                ['label' => 'Effective Gold', 'value' => $invoice->effective_gold, 'unit' => 'g', 'formula' => 'Gold Khalis + RP Mazdori + Casting Mazdori'],
+                ['label' => 'Grand Total', 'value' => $invoice->grand_total, 'unit' => 'g', 'formula' => 'Effective Gold'],
+                ['label' => 'Total Received Khalis', 'value' => $invoice->total_received_khalis, 'unit' => 'g', 'formula' => 'Sum of Receive Rows'],
             ],
             'balance_chain' => [
                 'previous_balance' => $invoice->previous_balance,
-                'grand_total' => $invoice->grand_total,
+                'effective_gold' => $invoice->effective_gold,
+                            'grand_total' => $invoice->grand_total,
                 'wasooli' => $invoice->wasooli,
                 'received_khalis' => $invoice->total_received_khalis,
                 'remaining_balance' => $invoice->remaining_balance,
+                'formula' => 'Previous + Effective - Wasooli - Received',
             ],
         ];
-    }
-
-    private function recalculateBalanceChain(int $customerId, ?int $excludeInvoiceId = null): void
-    {
-        $customer = Customer::find($customerId);
-        if (!$customer) return;
-
-        $this->calcService->recalculateChain($customer, $excludeInvoiceId);
     }
 }

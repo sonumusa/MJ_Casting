@@ -70,6 +70,22 @@
     .receipt-row {
         background-color: rgba(16,185,129,0.08) !important;
     }
+    .invoice-row {
+        background-color: rgba(234,179,8,0.08) !important;
+    }
+    .positive { color: var(--success); font-weight: 600; }
+    .negative { color: var(--error); font-weight: 600; }
+    
+    .formula-box {
+        background: rgba(218,165,32,0.08);
+        border: 1px dashed var(--gold-primary);
+        border-radius: 12px;
+        padding: 16px;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        color: var(--gold-bright);
+        margin-top: 16px;
+    }
 </style>
 @endsection
 
@@ -82,8 +98,8 @@
 
     <div class="ledger-header">
         <form method="GET" action="{{ route('ledger.index') }}">
-            <div style="display: flex; gap: 12px; align-items: end;">
-                <div style="flex: 1;">
+            <div style="display: flex; gap: 12px; align-items: end; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
                     <label>Select Party <span class="font-urdu">پارٹی منتخب کریں</span></label>
                     <select name="customer_id" class="filter-control" onchange="this.form.submit()">
                         <option value="">Select Party...</option>
@@ -101,7 +117,10 @@
         @if($selectedCustomer && $ledgerData)
             <div style="margin-top: 24px; padding: 20px; background: var(--bg-surface); border-radius: 12px;">
                 <h2 style="margin:0 0 8px 0; color:var(--gold-primary);">{{ $selectedCustomer->name }}</h2>
-                <p style="margin:0; color:var(--text-secondary);">Party Type: <strong>{{ ucfirst($selectedCustomer->party_type) }}</strong></p>
+                <p style="margin:0; color:var(--text-secondary);">
+                    Party Type: <strong>{{ ucfirst($selectedCustomer->party_type) }}</strong> | 
+                    Period: <strong>{{ $dateRangeLabel }}</strong>
+                </p>
                 
                 <div class="summary-grid" style="margin-top: 20px;">
                     <div class="summary-box">
@@ -109,37 +128,58 @@
                         <div class="summary-value">{{ number_format($ledgerData['opening_balance'] ?? 0, 3) }}g</div>
                     </div>
                     <div class="summary-box">
-                        <div class="summary-label">Gold Given</div>
-                        <div class="summary-value">{{ number_format($ledgerData['total_gold_khalis'] ?? 0, 3) }}g</div>
+                        <div class="summary-label">Gold Given to Party</div>
+                        <div class="summary-value negative">+{{ number_format($ledgerData['total_given'] ?? 0, 3) }}g</div>
+                        <small style="color:var(--text-muted);">Increases balance</small>
                     </div>
                     <div class="summary-box">
-                        <div class="summary-label">Total Invoiced</div>
-                        <div class="summary-value">{{ number_format($ledgerData['total_invoiced'] ?? 0, 3) }}g</div>
+                        <div class="summary-label">Gold Received from Party</div>
+                        <div class="summary-value positive">-{{ number_format($ledgerData['total_received'] ?? 0, 3) }}g</div>
+                        <small style="color:var(--text-muted);">Reduces balance</small>
+                    </div>
+                    <div class="summary-box">
+                        <div class="summary-label">Wasooli (Cash)</div>
+                        <div class="summary-value positive">-{{ number_format($ledgerData['total_wasooli'] ?? 0, 3) }}g</div>
+                        <small style="color:var(--text-muted);">Reduces balance</small>
                     </div>
                     <div class="summary-box {{ ($ledgerData['current_balance'] ?? 0) > 0 ? 'box-outstanding' : 'box-cleared' }}">
                         <div class="summary-label">Current Balance</div>
-                        <div class="summary-value" style="color: {{ ($ledgerData['current_balance'] ?? 0) > 0 ? 'var(--error)' : 'var(--success)' }};">
+                        <div class="summary-value" style="color: {{ ($ledgerData['current_balance'] ?? 0) > 0 ? 'var(--error)' : 'var(--success)' }}; font-size: 1.4rem;">
                             {{ number_format($ledgerData['current_balance'] ?? 0, 3) }}g
                         </div>
+                        <small style="color:var(--text-muted);">
+                            {{ ($ledgerData['current_balance'] ?? 0) > 0 ? 'Party owes you' : 'You owe party' }}
+                        </small>
                     </div>
+                </div>
+                
+                <!-- Formula Breakdown -->
+                <div class="formula-box">
+                    <strong>✅ Balance Formula:</strong><br>
+                    {{ $ledgerData['formula'] }}<br><br>
+                    <strong>Calculation:</strong><br>
+                    {{ number_format($ledgerData['calculation_breakdown']['opening'], 3) }} 
+                    + {{ number_format($ledgerData['calculation_breakdown']['+ given'], 3) }} 
+                    - {{ number_format($ledgerData['calculation_breakdown']['- received'], 3) }} 
+                    - {{ number_format($ledgerData['calculation_breakdown']['- wasooli'], 3) }} 
+                    = <strong style="color:#4ade80">{{ number_format($ledgerData['calculation_breakdown']['= balance'], 3) }}g</strong>
                 </div>
             </div>
         @endif
     </div>
 
     @if($selectedCustomer && $ledgerData)
-    @if($selectedCustomer && $ledgerData)
         <div class="filter-row">
             <form method="GET" action="{{ route('ledger.index') }}">
                 <input type="hidden" name="customer_id" value="{{ $selectedCustomer->id }}">
                 <div style="display:flex; gap:16px; flex-wrap:wrap;">
                     <div>
-                        <label>From</label>
-                        <input type="date" name="from_date" value="{{ request('from_date') }}" class="filter-control">
+                        <label>From Date</label>
+                        <input type="date" name="from_date" value="{{ $filters['from_date'] ?? '' }}" class="filter-control">
                     </div>
                     <div>
-                        <label>To</label>
-                        <input type="date" name="to_date" value="{{ request('to_date') }}" class="filter-control">
+                        <label>To Date</label>
+                        <input type="date" name="to_date" value="{{ $filters['to_date'] ?? '' }}" class="filter-control">
                     </div>
                     <div style="display:flex; gap:8px; align-items:flex-end;">
                         <button type="submit" class="btn-gold">Filter</button>
@@ -156,79 +196,110 @@
                         <th>Date</th>
                         <th>Type</th>
                         <th>Description</th>
-                        <th style="text-align:right">Gold In (Received)</th>
-                        <th style="text-align:right">Gold Out (Given)</th>
-                        <th style="text-align:right">Wasooli</th>
-                        <th style="text-align:right">Running Balance</th>
+                        <th style="text-align:right">📥 Gold In (From Party)</th>
+                        <th style="text-align:right">📤 Gold Out (To Party)</th>
+                        <th style="text-align:right">💰 Wasooli</th>
+                        <th style="text-align:right">⚖️ Running Balance</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- Opening -->
-                    <tr style="background:rgba(234,179,8,0.1);">
-                        <td colspan="6"><strong>Opening Balance</strong></td>
-                        <td class="font-mono" style="text-align:right; font-weight:700;">{{ number_format($ledgerData['opening_balance'] ?? 0, 3) }}g</td>
-                    </tr>
+<tbody>
+    <!-- Opening Balance -->
+    <tr style="background:rgba(234,179,8,0.15);">
+        <td colspan="6"><strong>📦 Opening Balance</strong></td>
+        <td class="font-mono" style="text-align:right; font-weight:700;">
+            {{ number_format($ledgerData['opening_balance'] ?? 0, 3) }}g
+        </td>
+    </tr>
 
-                    <!-- Integrated Transactions (Chronological) -->
-                    @if(!empty($ledgerData['transactions']))
-                        @foreach($ledgerData['transactions'] as $txn)
-                            @if($txn['type'] === 'invoice')
-                                @php
-                                    $invoice = $txn['object'];
-                                @endphp
-                                <tr>
-                                    <td>{{ $txn['date']->format('d/m/Y') }}</td>
-                                    <td><span style="background:#eab308;color:black;padding:2px 8px;border-radius:999px;font-size:0.7rem;">INVOICE</span></td>
-                                    <td>Invoice #{{ $invoice->invoice_no }}</td>
-                                    <td style="text-align:right">
-                                        @if($invoice->total_received_khalis > 0)
-                                            -{{ number_format($invoice->total_received_khalis, 3) }}g
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td class="negative" style="text-align:right">+{{ number_format($invoice->effective_gold ?? 0, 3) }}g</td>
-                                    <td class="font-mono" style="text-align:right">
-                                        @if($invoice->wasooli > 0)
-                                            -{{ number_format($invoice->wasooli ?? 0, 3) }}g
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td class="font-mono" style="text-align:right; font-weight:600;color:{{ $txn['running_balance_after'] > 0 ? 'var(--error)' : 'var(--success)' }};">
-                                        {{ number_format($txn['running_balance_after'], 3) }}g
-                                    </td>
-                                </tr>
-                            @elseif($txn['type'] === 'receipt')
-                                @php
-                                    $receipt = $txn['object'];
-                                @endphp
-                                <tr class="receipt-row">
-                                    <td>{{ $txn['date']->format('d/m/Y') }}</td>
-                                    <td><span style="background:#4ade80;color:black;padding:2px 8px;border-radius:999px;font-size:0.7rem;">RECEIPT</span></td>
-                                    <td>Receipt #{{ $txn['receipt_no'] }}</td>
-                                    <td class="positive" style="text-align:right">-{{ number_format($receipt->total_khalis_weight, 3) }}g</td>
-                                    <td style="text-align:right">-</td>
-                                    <td style="text-align:right">-</td>
-                                    <td class="font-mono" style="text-align:right; font-weight:600;">{{ number_format($txn['running_balance_after'], 3) }}g</td>
-                                </tr>
-                            @endif
-                        @endforeach
-                    @else
-                        <tr>
-                            <td colspan="7" style="text-align:center; padding:40px; color:var(--text-secondary);">
-                                No transactions in selected period
-                            </td>
-                        </tr>
-                    @endif
+    <!-- Transactions -->
+    @if(!empty($ledgerData['transactions']))
+        @foreach($ledgerData['transactions'] as $txn)
+            @if($txn['type'] === 'invoice')
+                @php
+                    $invoice = $txn['object'];
+                @endphp
+                <tr class="invoice-row">
+                    <td>{{ $txn['date']?->format('d/m/Y') ?? '-' }}</td>
+                    <td><span style="background:#eab308;color:#000;padding:2px 8px;border-radius:999px;font-size:0.7rem;font-weight:600;">INVOICE</span></td>
+                    <td>
+                        <strong>{{ $invoice->invoice_no }}</strong><br>
+                        <small style="color:var(--text-muted);">{{ $invoice->customer?->name }}</small>
+                    </td>
+                    <!-- 📥 Gold In (Received via invoice) -->
+                    <td style="text-align:right">
+                        @if(($txn['received_khalis'] ?? 0) > 0)
+                            <span class="positive">+{{ number_format($txn['received_khalis'], 3) }}g</span>
+                        @else
+                            <span style="color:var(--text-muted);">-</span>
+                        @endif
+                    </td>
+                    <!-- 📤 Gold Out (Given to party) -->
+                    <td style="text-align:right">
+                        @if(($txn['effective_gold'] ?? 0) > 0)
+                            <span class="negative">+{{ number_format($txn['effective_gold'], 3) }}g</span>
+                        @else
+                            <span style="color:var(--text-muted);">-</span>
+                        @endif
+                    </td>
+                    <!-- 💰 Wasooli (Cash received) -->
+                    <td style="text-align:right">
+                        @if(($txn['wasooli'] ?? 0) > 0)
+                            <span class="positive">-{{ number_format($txn['wasooli'], 3) }}g</span>
+                        @else
+                            <span style="color:var(--text-muted);">-</span>
+                        @endif
+                    </td>
+                    <!-- ⚖️ Running Balance -->
+                    <td class="font-mono" style="text-align:right; font-weight:600; color:{{ $txn['running_balance_after'] > 0 ? 'var(--error)' : 'var(--success)' }};">
+                        {{ number_format($txn['running_balance_after'], 3) }}g
+                    </td>
+                </tr>
+                
+            @elseif($txn['type'] === 'receipt')
+                @php
+                    $receipt = $txn['object'];
+                @endphp
+                <tr class="receipt-row">
+                    <td>{{ $txn['date']?->format('d/m/Y') ?? '-' }}</td>
+                    <td><span style="background:#4ade80;color:#000;padding:2px 8px;border-radius:999px;font-size:0.7rem;font-weight:600;">RECEIPT</span></td>
+                    <td>
+                        <strong>{{ $txn['receipt_no'] }}</strong><br>
+                        <small style="color:var(--text-muted);">{{ $receipt->customer?->name }}</small>
+                    </td>
+                    <!-- 📥 Gold In (Standalone receipt) -->
+                    <td style="text-align:right">
+                        <span class="positive">+{{ number_format($txn['khalis_weight'] ?? 0, 3) }}g</span>
+                    </td>
+                    <td style="text-align:right"><span style="color:var(--text-muted);">-</span></td>
+                    <td style="text-align:right"><span style="color:var(--text-muted);">-</span></td>
+                    <td class="font-mono" style="text-align:right; font-weight:600;">
+                        {{ number_format($txn['running_balance_after'], 3) }}g
+                    </td>
+                </tr>
+            @endif
+        @endforeach
+    @else
+        <tr>
+            <td colspan="7" style="text-align:center; padding:40px; color:var(--text-secondary);">
+                <i class="bi bi-inbox" style="font-size:2rem; display:block; margin-bottom:10px; opacity:0.5;"></i>
+                No transactions in selected period
+            </td>
+        </tr>
+    @endif
 
-                    <tr class="totals-row">
-                        <td colspan="6"><strong>FINAL BALANCE</strong></td>
-                        <td class="font-mono" style="text-align:right; font-size:1.1rem; font-weight:700; color:{{ ($ledgerData['current_balance'] ?? 0) > 0 ? 'var(--error)' : 'var(--success)' }};">
-                            {{ number_format($ledgerData['current_balance'] ?? 0, 3) }}g
-                        </td>
-                    </tr>
-                </tbody>
+    <!-- Final Balance with Formula -->
+    <tr class="totals-row">
+        <td colspan="6">
+            <strong>🎯 FINAL BALANCE</strong><br>
+            <small style="color:var(--text-muted); font-weight:400;">
+                {{ ($ledgerData['current_balance'] ?? 0) > 0 ? 'Party owes you' : 'You owe party' }}
+            </small>
+        </td>
+        <td class="font-mono" style="text-align:right; font-size:1.1rem; font-weight:700; color:{{ ($ledgerData['current_balance'] ?? 0) > 0 ? 'var(--error)' : 'var(--success)' }};">
+            {{ number_format($ledgerData['current_balance'] ?? 0, 3) }}g
+        </td>
+    </tr>
+</tbody>
             </table>
         </div>
     @else

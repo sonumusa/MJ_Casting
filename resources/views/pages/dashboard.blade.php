@@ -235,13 +235,15 @@
                     <small>Live calculation with ratti & mazdori</small>
                 </div>
             </a>
-            <a href="{{ route('gold-receipts.create') }}" class="module-link">
-                <i class="bi bi-box-arrow-in-down" style="font-size:2rem;color:#4ade80"></i>
-                <div>
-                    <strong>New Gold Receipt</strong><br>
-                    <small>Record pure khalis received from party</small>
-                </div>
-            </a>
+            @if (Route::has('gold-receipts.create'))
+                <a href="{{ route('gold-receipts.create') }}" class="module-link">
+                    <i class="bi bi-box-arrow-in-down" style="font-size:2rem;color:#4ade80"></i>
+                    <div>
+                        <strong>New Gold Receipt</strong><br>
+                        <small>Record pure khalis received from party</small>
+                    </div>
+                </a>
+            @endif
             <a href="{{ route('inventory.index') }}" class="module-link">
                 <i class="bi bi-graph-up-arrow" style="font-size:2rem;color:#a5b4fc"></i>
                 <div>

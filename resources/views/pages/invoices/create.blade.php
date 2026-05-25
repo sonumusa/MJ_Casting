@@ -78,9 +78,13 @@
         font-weight: 500;
     }
 
-    .formula-hint { font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; font-style: italic; }
+    .formula-hint { 
+        font-size: 0.7rem; 
+        color: var(--text-muted); 
+        margin-top: 6px; 
+        font-style: italic; 
+    }
 
-    /* Dynamic Receive Rows */
     .receive-row {
         display: grid;
         grid-template-columns: 2fr 1fr 1fr 1fr 48px;
@@ -118,8 +122,11 @@
         transform: translateY(-1px);
     }
     .btn-remove-row {
-        width: 36px; height: 36px;
-        display: flex; align-items: center; justify-content: center;
+        width: 36px; 
+        height: 36px;
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
         background: rgba(244,63,94,0.1);
         color: var(--error);
         border: 1px solid rgba(244,63,94,0.2);
@@ -132,7 +139,6 @@
         transform: scale(1.05);
     }
 
-    /* Live Panel */
     .live-panel {
         position: sticky;
         top: 88px;
@@ -160,9 +166,18 @@
         font-size: 0.88rem;
     }
     .live-row:last-child { border-bottom: none; }
-    .live-label { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-weight: 500; }
-    .live-value { font-family: 'JetBrains Mono', monospace; color: var(--text-primary); font-weight: 600; }
-    .live-formula { font-size: 0.68rem; color: var(--text-muted); margin-left: auto; margin-right: 12px; font-style: italic; }
+    .live-label { 
+        display: flex; 
+        align-items: center; 
+        gap: 10px; 
+        color: var(--text-secondary); 
+        font-weight: 500; 
+    }
+    .live-value { 
+        font-family: 'JetBrains Mono', monospace; 
+        color: var(--text-primary); 
+        font-weight: 600; 
+    }
 
     .highlight-gold {
         background: rgba(218, 165, 32, 0.08);
@@ -172,7 +187,10 @@
         border-left: 3px solid var(--gold-primary);
         border-right: 3px solid var(--gold-primary);
     }
-    .highlight-gold .live-value { color: var(--gold-bright); font-weight: 700; }
+    .highlight-gold .live-value { 
+        color: var(--gold-bright); 
+        font-weight: 700; 
+    }
 
     .highlight-blue {
         background: rgba(56, 189, 248, 0.06);
@@ -188,12 +206,32 @@
         text-align: center;
         box-shadow: var(--shadow-2);
     }
-    .box-grand-total { background: linear-gradient(135deg, #064e3b, #059669); border: 1px solid var(--success); }
-    .box-remaining { background: linear-gradient(135deg, #450a0a, #b91c1c); border: 1px solid var(--error); }
-    .box-remaining.cleared { background: linear-gradient(135deg, #064e3b, #059669); border: 1px solid var(--success); }
+    .box-grand-total { 
+        background: linear-gradient(135deg, #064e3b, #059669); 
+        border: 1px solid var(--success); 
+    }
+    .box-remaining { 
+        background: linear-gradient(135deg, #450a0a, #b91c1c); 
+        border: 1px solid var(--error); 
+    }
+    .box-remaining.cleared { 
+        background: linear-gradient(135deg, #064e3b, #059669); 
+        border: 1px solid var(--success); 
+    }
 
-    .total-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.9; margin-bottom: 6px; font-weight: 700; }
-    .total-value { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 700; }
+    .total-label { 
+        font-size: 0.72rem; 
+        text-transform: uppercase; 
+        letter-spacing: 0.12em; 
+        opacity: 0.9; 
+        margin-bottom: 6px; 
+        font-weight: 700; 
+    }
+    .total-value { 
+        font-family: 'JetBrains Mono', monospace; 
+        font-size: 1.6rem; 
+        font-weight: 700; 
+    }
 
     .customer-info-box {
         background: var(--bg-surface);
@@ -211,11 +249,17 @@
     .shimmer::after {
         content: '';
         position: absolute;
-        top: 0; left: -100%; width: 100%; height: 100%;
+        top: 0; 
+        left: -100%; 
+        width: 100%; 
+        height: 100%;
         background: linear-gradient(90deg, transparent, rgba(218, 165, 32, 0.15), transparent);
         animation: shimmer 3s infinite;
     }
-    @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
+    @keyframes shimmer { 
+        0% { left: -100%; } 
+        100% { left: 100%; } 
+    }
 
     @media (max-width: 1024px) {
         .invoice-grid { grid-template-columns: 1fr; }
@@ -255,9 +299,10 @@
     @csrf
     <input type="hidden" name="previous_balance" id="previous_balance" value="0">
     <input type="hidden" name="total_received_khalis" id="total_received_khalis" value="0">
-    <input type="hidden" name="waste_auto" id="waste_auto" value="1">
-    <input type="hidden" name="ratti_auto" id="ratti_auto" value="1">
-    <input type="hidden" name="male_waste_auto" id="male_waste_auto" value="1">
+    <input type="hidden" name="waste_weight" id="waste_weight_hidden" value="0">
+    <input type="hidden" name="total_weight" id="total_weight_hidden" value="0">
+    <input type="hidden" name="male_waste" id="male_waste_hidden" value="0">
+    <input type="hidden" name="gold_khalis" id="gold_khalis_hidden" value="0">
 
     <div class="invoice-grid">
         <!-- Left Column: Form -->
@@ -289,13 +334,19 @@
                         <select name="customer_id" id="customer_id" class="filter-control" required>
                             <option value="">Select Party</option>
                             @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}" data-type="{{ $customer->party_type }}">{{ $customer->name }} ({{ ucfirst($customer->party_type) }})</option>
+                                <option value="{{ $customer->id }}" data-type="{{ $customer->party_type }}">
+                                    {{ $customer->name }} ({{ ucfirst($customer->party_type) }})
+                                </option>
                             @endforeach
                         </select>
                         <div id="customer-balance-box" class="customer-info-box">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 0.8rem; color: var(--text-secondary);">To Date Opening / Previous Balance (سابقہ بقایا):</span>
-                                <span id="customer-current-balance" class="font-mono" style="font-weight: 700; color: var(--gold-bright);">0.000g</span>
+                                <span style="font-size: 0.8rem; color: var(--text-secondary);">
+                                    Opening / Previous Balance (سابقہ بقایا):
+                                </span>
+                                <span id="customer-current-balance" class="font-mono" style="font-weight: 700; color: var(--gold-bright);">
+                                    0.000g
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -331,7 +382,7 @@
                             <input type="number" step="0.01" name="rp_mazdori_rate" id="rp_mazdori_rate" class="filter-control" placeholder="0.00" value="5000">
                             <span class="unit-label">Rs/g</span>
                         </div>
-                        <div class="formula-hint">RP Mazdori Weight × Rate = RP Mazdori Amount</div>
+                        <div class="formula-hint">RP Mazdori Weight × Rate = Amount (Display Only)</div>
                     </div>
 
                     <div class="form-group">
@@ -348,18 +399,22 @@
                             <input type="number" step="0.01" name="casting_mazdori_rate" id="casting_mazdori_rate" class="filter-control" placeholder="0.00" value="5000">
                             <span class="unit-label">Rs/g</span>
                         </div>
-                        <div class="formula-hint">Casting Mazdori Weight × Rate = Casting Mazdori Amount</div>
+                        <div class="formula-hint">Casting Mazdori Weight × Rate = Amount (Display Only)</div>
                     </div>
 
                     <div class="form-group">
-                        <label for="rp_rate">Current Gold Rate (Rs per gram) <span class="font-urdu">موجودہ سونے کا ریٹ (روپے فی گرام)</span></label>
+                        <label for="rp_rate">Current Gold Rate (Rs/g) <span class="font-urdu">موجودہ سونے کا ریٹ</span></label>
                         <input type="number" step="0.01" name="rp_rate" id="rp_rate" class="filter-control" value="{{ \App\Models\Setting::getSetting('default_rp_rate', 8500) }}" required>
                         <small class="formula-hint">Used for converting gold value to monetary total.</small>
                     </div>
 
-                    <div class="form-group full-width">
-                        <label for="remarks">Remarks <span class="font-urdu">ریمارکس</span></label>
-                        <textarea name="remarks" id="remarks" class="filter-control" rows="3" placeholder="Any additional notes..."></textarea>
+                    <div class="form-group">
+                        <label for="wasooli">Wasooli (Cash/Gold Returned) <span class="font-urdu">وصولی</span></label>
+                        <div class="calc-input-wrapper">
+                            <input type="number" step="0.001" name="wasooli" id="wasooli" class="filter-control" placeholder="0.000" value="0">
+                            <span class="unit-label">g</span>
+                        </div>
+                        <div class="formula-hint">Gold or equivalent value returned by party</div>
                     </div>
                 </div>
             </div>
@@ -371,10 +426,6 @@
                     <h3>Gold Calculation <span class="font-urdu">ذہبی حساب</span></h3>
                 </div>
                 <div class="input-grid">
-                    <input type="hidden" name="waste_auto" id="waste_auto" value="1">
-                    <input type="hidden" name="ratti_auto" id="ratti_auto" value="1">
-                    <input type="hidden" name="male_waste_auto" id="male_waste_auto" value="1">
-
                     <div class="form-group">
                         <label for="casting_weight">Casting Weight <span class="font-urdu">کاسٹنگ وزن</span></label>
                         <div class="calc-input-wrapper">
@@ -389,46 +440,48 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="ratti_rate">Ratti Rate <span class="font-urdu">رتی ریٹ</span></label>
+                        <label for="ratti_rate">Ratti Deduction Rate (g) <span class="font-urdu">رتی کٹوتی شرح</span></label>
                         <div class="calc-input-wrapper">
-                            <input type="number" step="0.001" name="ratti_rate" id="ratti_rate" class="filter-control" placeholder="0.000" value="{{ \App\Models\Setting::getSetting('default_ratti_rate', 0) }}">
+                            <input type="number" step="0.001" name="ratti_rate" id="ratti_rate" class="filter-control" placeholder="0.000" value="{{ \App\Models\Setting::getSetting('default_ratti_rate', 0) }}" readonly>
                             <span class="unit-label">g</span>
                         </div>
-                        <div class="formula-hint">Formula: Casting / 10 × Ratti Rate</div>
+                        <div class="formula-hint">Auto-populated from system setting when Ratti is entered.</div>
                     </div>
 
                     <div class="form-group">
-                        <label for="waste_weight">Waste Weight <span class="font-urdu">ویسٹ وزن</span></label>
+                        <label for="waste_weight_display">Waste Weight <span class="font-urdu">ویسٹ وزن</span></label>
                         <div class="calc-input-wrapper">
-                            <input type="number" step="0.001" name="waste_weight" id="waste_weight" class="filter-control" placeholder="0.000" readonly>
+                            <input type="number" step="0.001" id="waste_weight_display" class="filter-control" placeholder="0.000" value="0" readonly style="background: var(--bg-app); color: var(--gold-bright); font-weight: 700;">
                             <span class="unit-label">g</span>
                         </div>
+                        <div class="formula-hint">Casting Weight ÷ 10 × Ratti Deduction Rate</div>
                     </div>
 
                     <div class="form-group">
-                        <label for="male_waste">Male Waste <span class="font-urdu">میل ویسٹ</span></label>
+                        <label for="total_weight_display">Total Weight <span class="font-urdu">کل وزن</span></label>
                         <div class="calc-input-wrapper">
-                            <input type="number" step="0.001" name="male_waste" id="male_waste" class="filter-control" placeholder="0.000" readonly>
+                            <input type="number" step="0.001" id="total_weight_display" class="filter-control" placeholder="0.000" readonly style="background: var(--bg-app); color: var(--gold-bright); font-weight: 700;">
                             <span class="unit-label">g</span>
                         </div>
-                        <div class="formula-hint">Formula: Total Weight / 96 × Ratti</div>
+                        <div class="formula-hint">Casting Weight + Waste Weight</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="male_waste_display">Male Waste <span class="font-urdu">میل ویسٹ</span></label>
+                        <div class="calc-input-wrapper">
+                            <input type="number" step="0.001" id="male_waste_display" class="filter-control" placeholder="0.000" value="0" readonly style="background: var(--bg-app); color: var(--gold-bright); font-weight: 700;">
+                            <span class="unit-label">g</span>
+                        </div>
+                        <div class="formula-hint">Total Weight ÷ 96 × Ratti</div>
                     </div>
 
                     <div class="form-group full-width">
-                        <label>Total Weight <span class="font-urdu">کل وزن</span></label>
+                        <label>Gold Khalis <span class="font-urdu">خالص سونا</span></label>
                         <div class="calc-input-wrapper">
-                            <input type="number" step="0.001" name="total_weight" id="total_weight" class="filter-control" placeholder="0.000" readonly>
+                            <input type="number" step="0.001" id="gold_khalis_display" class="filter-control" placeholder="0.000" readonly style="background: var(--bg-app); color: var(--gold-bright); font-weight: 700; font-size: 1.1rem;">
                             <span class="unit-label">g</span>
                         </div>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label>Total Khalis Gold <span class="font-urdu">کل خالص سونا</span></label>
-                        <div class="calc-input-wrapper">
-                            <input type="number" step="0.001" name="gold_khalis" id="gold_khalis" class="filter-control" placeholder="0.000" readonly>
-                            <span class="unit-label">g</span>
-                        </div>
-                        <div class="formula-hint">Formula: Total Weight - Male Waste</div>
+                        <div class="formula-hint">Total Weight - Male Waste</div>
                     </div>
                 </div>
             </div>
@@ -450,6 +503,18 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Section 5: Remarks -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="bi bi-chat-square-text"></i>
+                    <h3>Additional Information</h3>
+                </div>
+                <div class="form-group full-width" style="margin-bottom: 0;">
+                    <label for="remarks">Remarks <span class="font-urdu">ریمارکس</span></label>
+                    <textarea name="remarks" id="remarks" class="filter-control" rows="3" placeholder="Any additional notes..."></textarea>
+                </div>
+            </div>
         </div>
 
         <!-- Right Column: Live Panel -->
@@ -465,7 +530,6 @@
                 </div>
                 <div class="live-row highlight-gold" id="received-khalis-shimmer">
                     <span class="live-label"><i class="bi bi-box-arrow-in-down"></i> Total Received Khalis:</span>
-                    <span class="live-formula">Σ(Weight - Weight/96×Ratti)</span>
                     <span class="live-value" id="live-total-received">0.000g</span>
                 </div>
 
@@ -481,17 +545,29 @@
                     <span class="live-label">Ratti:</span>
                     <span class="live-value" id="live-ratti">0.00</span>
                 </div>
+                <div class="live-row">
+                    <span class="live-label">Waste Weight:</span>
+                    <span class="live-value" id="live-waste">0.000g</span>
+                </div>
+                <div class="live-row">
+                    <span class="live-label">Total Weight:</span>
+                    <span class="live-value" id="live-total-weight">0.000g</span>
+                </div>
+                <div class="live-row">
+                    <span class="live-label">Male Waste:</span>
+                    <span class="live-value" id="live-male-waste">0.000g</span>
+                </div>
                 <div class="live-row highlight-gold" id="gold-khalis-shimmer">
                     <span class="live-label"><i class="bi bi-star-fill"></i> Gold Khalis:</span>
                     <span class="live-value" id="val-gold-khalis">0.000g</span>
                 </div>
 
                 <div class="live-row">
-                    <span class="live-label"><i class="bi bi-plus-circle row-addition"></i> RP Mazdori Gold:</span>
+                    <span class="live-label"><i class="bi bi-plus-circle"></i> RP Mazdori Gold:</span>
                     <span class="live-value" id="live-rp-maz">0.000g</span>
                 </div>
                 <div class="live-row">
-                    <span class="live-label"><i class="bi bi-plus-circle row-addition"></i> Casting Mazdori:</span>
+                    <span class="live-label"><i class="bi bi-plus-circle"></i> Casting Mazdori:</span>
                     <span class="live-value" id="live-cast-maz">0.000g</span>
                 </div>
                 <div class="live-row highlight-blue">
@@ -518,7 +594,10 @@
                     <span class="live-label">- Received Khalis:</span>
                     <span class="live-value" id="live-received-deduct" style="color: var(--success);">0.000g</span>
                 </div>
-                <!-- Wasooli display removed -->
+                <div class="live-row">
+                    <span class="live-label">- Wasooli:</span>
+                    <span class="live-value" id="live-wasooli" style="color: var(--success);">0.000g</span>
+                </div>
 
                 <div class="total-box box-remaining" id="box-remaining">
                     <div class="total-label">FINAL REMAINING BALANCE</div>
@@ -542,7 +621,32 @@
 @section('extra_js')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script>
-// Simple Ratti Formula (No toggles - always auto)
+// Constants
+const DEFAULT_RATTI_RATE = {{ \App\Models\Setting::getSetting('default_ratti_rate', 0) }};
+
+// Helper: Get element value safely
+function getElementValue(id) {
+    const el = document.getElementById(id);
+    return el ? (parseFloat(el.value) || 0) : 0;
+}
+
+// Helper: Set element value safely
+function setElementValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.value = value;
+    }
+}
+
+// Helper: Set element text safely
+function setElementText(id, text) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.innerText = text;
+    }
+}
+
+// Helper: Convert to Khalis (for receive rows)
 function convertToKhalis(gross, ratti) {
     const g = parseFloat(gross || 0);
     const r = parseFloat(ratti || 0);
@@ -550,12 +654,14 @@ function convertToKhalis(gross, ratti) {
     return Math.round((g - ((g / 96) * r)) * 1000) / 1000;
 }
 
+// Receive Row Management
 let receiveRowIndex = 0;
-let allCustomerOptions = [];
 
 function addReceiveRow(data = null) {
     const idx = receiveRowIndex++;
     const container = document.getElementById('receive-rows-container');
+    if (!container) return;
+    
     const row = document.createElement('div');
     row.className = 'receive-row animate-up';
     row.dataset.index = idx;
@@ -601,143 +707,231 @@ function addReceiveRow(data = null) {
         calculate();
     };
 
-    grossInput.addEventListener('input', updateRow);
-    rattiInput.addEventListener('input', updateRow);
+    if (grossInput) grossInput.addEventListener('input', updateRow);
+    if (rattiInput) rattiInput.addEventListener('input', updateRow);
 }
 
 function removeReceiveRow(btn) {
     const row = btn.closest('.receive-row');
-    row.remove();
-    calculate();
+    if (!row) return;
+    
+    gsap.to(row, { 
+        opacity: 0, 
+        height: 0, 
+        marginBottom: 0, 
+        padding: 0, 
+        duration: 0.3, 
+        onComplete: () => { 
+            row.remove(); 
+            calculate(); 
+        } 
+    });
 }
 
+// Main Calculation Function
+function calculate() {
+    // Get input values safely
+    const casting = getElementValue('casting_weight');
+    const ratti = getElementValue('ratti');
+    const rattiRateInput = document.getElementById('ratti_rate');
+    let rattiRate = rattiRateInput ? (parseFloat(rattiRateInput.value) || 0) : 0;
+    
+    const rpMazdoriWeight = getElementValue('rp_mazdori_weight');
+    const castMaz = getElementValue('casting_mazdori_weight');
+    const previous = getElementValue('previous_balance');
+    const wasooli = getElementValue('wasooli');
+
+    // Auto-set Ratti Rate if Ratti is entered
+    if (ratti > 0 && rattiRate === 0 && rattiRateInput) {
+        rattiRate = DEFAULT_RATTI_RATE;
+        rattiRateInput.value = DEFAULT_RATTI_RATE.toFixed(3);
+    }
+
+    // Step 1: Calculate Waste Weight
+    let wasteWeight = 0;
+    if (casting > 0 && rattiRate > 0) {
+        wasteWeight = (casting / 10) * rattiRate;
+    }
+    wasteWeight = Math.round(wasteWeight * 1000) / 1000;
+
+    // Step 2: Calculate Total Weight
+    const totalWeight = Math.round((casting + wasteWeight) * 1000) / 1000;
+
+    // Step 3: Calculate Male Waste
+    let maleWaste = 0;
+    if (totalWeight > 0 && ratti > 0) {
+        maleWaste = (totalWeight / 96) * ratti;
+    }
+    maleWaste = Math.round(maleWaste * 1000) / 1000;
+
+    // Step 4: Calculate Gold Khalis
+    const goldKhalis = Math.round((totalWeight - maleWaste) * 1000) / 1000;
+
+    // Calculate Total Received Khalis
+    let totalReceivedKhalis = 0;
+    document.querySelectorAll('.receive-khalis').forEach(el => {
+        totalReceivedKhalis += parseFloat(el.value || 0);
+    });
+    totalReceivedKhalis = Math.round(totalReceivedKhalis * 1000) / 1000;
+
+    // Calculate Effective Gold
+    const effectiveGold = Math.round((goldKhalis + rpMazdoriWeight + castMaz) * 1000) / 1000;
+
+    // Calculate Remaining Balance
+    const remainingBalance = Math.round((previous + effectiveGold - wasooli - totalReceivedKhalis) * 1000) / 1000;
+
+    // Update display fields (readonly inputs)
+    setElementValue('waste_weight_display', wasteWeight.toFixed(3));
+    setElementValue('total_weight_display', totalWeight.toFixed(3));
+    setElementValue('male_waste_display', maleWaste.toFixed(3));
+    setElementValue('gold_khalis_display', goldKhalis.toFixed(3));
+
+    // Update hidden fields for form submission
+    setElementValue('waste_weight_hidden', wasteWeight.toFixed(3));
+    setElementValue('total_weight_hidden', totalWeight.toFixed(3));
+    setElementValue('male_waste_hidden', maleWaste.toFixed(3));
+    setElementValue('gold_khalis_hidden', goldKhalis.toFixed(3));
+    setElementValue('total_received_khalis', totalReceivedKhalis.toFixed(3));
+
+    // Update Live Panel
+    setElementText('live-total-received', totalReceivedKhalis.toFixed(3) + 'g');
+    setElementText('display-total-received', totalReceivedKhalis.toFixed(3) + 'g');
+    setElementText('live-casting', casting.toFixed(3) + 'g');
+    setElementText('live-ratti', ratti.toFixed(2));
+    setElementText('live-waste', wasteWeight.toFixed(3) + 'g');
+    setElementText('live-total-weight', totalWeight.toFixed(3) + 'g');
+    setElementText('live-male-waste', maleWaste.toFixed(3) + 'g');
+    setElementText('val-gold-khalis', goldKhalis.toFixed(3) + 'g');
+    setElementText('live-rp-maz', rpMazdoriWeight.toFixed(3) + 'g');
+    setElementText('live-cast-maz', castMaz.toFixed(3) + 'g');
+    setElementText('val-effective-gold', effectiveGold.toFixed(3) + 'g');
+    setElementText('val-total-gold-out', effectiveGold.toFixed(3) + 'g');
+    setElementText('val-prev-balance', previous.toFixed(3) + 'g');
+    setElementText('val-this-invoice', effectiveGold.toFixed(3) + 'g');
+    setElementText('live-received-deduct', totalReceivedKhalis.toFixed(3) + 'g');
+    setElementText('live-wasooli', wasooli.toFixed(3) + 'g');
+    setElementText('val-remaining-balance', remainingBalance.toFixed(3) + 'g');
+    
+    // Update box styling based on balance
+    const remainingBox = document.getElementById('box-remaining');
+    if (remainingBox) {
+        if (remainingBalance <= 0) {
+            remainingBox.classList.add('cleared');
+        } else {
+            remainingBox.classList.remove('cleared');
+        }
+    }
+
+    // Trigger shimmer effect
+    triggerShimmer('received-khalis-shimmer');
+    triggerShimmer('gold-khalis-shimmer');
+}
+
+// Shimmer effect for visual feedback
+function triggerShimmer(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.classList.remove('shimmer');
+        void el.offsetWidth;
+        el.classList.add('shimmer');
+        setTimeout(() => el.classList.remove('shimmer'), 3000);
+    }
+}
+
+// Document Ready
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('invoice-form');
     const invoiceTypeSelect = document.getElementById('invoice_type');
     const customerSelect = document.getElementById('customer_id');
+    const btnAddReceive = document.getElementById('btn-add-receive');
+    const rattiInput = document.getElementById('ratti');
+    const rattiRateInput = document.getElementById('ratti_rate');
 
     // Add initial receive row
     addReceiveRow();
 
-    // Party Type Filtering (kept from your original)
-    allCustomerOptions = Array.from(customerSelect.options).map(option => ({
-        value: option.value,
-        text: option.textContent,
-        type: option.getAttribute('data-type') || ''
-    }));
-
-    function filterCustomers(selectedType) {
-        const currentValue = customerSelect.value;
-        customerSelect.innerHTML = '<option value="">Select matching Party</option>';
-
-        allCustomerOptions.forEach(opt => {
-            if (!opt.value) return;
-            if (!selectedType || opt.type === selectedType) {
-                const option = new Option(opt.text, opt.value);
-                option.setAttribute('data-type', opt.type);
-                customerSelect.appendChild(option);
-            }
-        });
-
-        if (currentValue && Array.from(customerSelect.options).some(o => o.value === currentValue)) {
-            customerSelect.value = currentValue;
-        }
+    // Add Receive Row Button
+    if (btnAddReceive) {
+        btnAddReceive.addEventListener('click', () => addReceiveRow());
     }
 
-    invoiceTypeSelect.addEventListener('change', (e) => {
-        filterCustomers(e.target.value);
-        calculate();
-    });
+    // Party Type Filtering
+    if (customerSelect) {
+        let allCustomerOptions = Array.from(customerSelect.options).map(option => ({
+            value: option.value,
+            text: option.textContent,
+            type: option.getAttribute('data-type') || ''
+        }));
 
-    // Customer Selection - Show opening balance immediately
-    customerSelect.addEventListener('change', async () => {
-        const customerId = customerSelect.value;
-        const box = document.getElementById('customer-balance-box');
-        const balanceText = document.getElementById('customer-current-balance');
-        const prevBalanceInput = document.getElementById('previous_balance');
+        function filterCustomers(selectedType) {
+            if (!customerSelect) return;
+            const currentValue = customerSelect.value;
+            customerSelect.innerHTML = '<option value="">Select matching Party</option>';
 
-        if (customerId) {
-            try {
-                const baseUrl = '{{ url("") }}';
-                const response = await fetch(`${baseUrl}/customers/${customerId}/last-balance`);
-                const data = await response.json();
-                const balance = parseFloat(data.balance || 0);
+            allCustomerOptions.forEach(opt => {
+                if (!opt.value) return;
+                if (!selectedType || opt.type === selectedType) {
+                    const option = new Option(opt.text, opt.value);
+                    option.setAttribute('data-type', opt.type);
+                    customerSelect.appendChild(option);
+                }
+            });
 
-                prevBalanceInput.value = balance;
-                box.style.display = 'block';
-                balanceText.innerText = balance.toFixed(3) + 'g';
-            } catch (error) {
-                console.error('Error fetching customer balance:', error);
-                prevBalanceInput.value = "0";
+            if (currentValue && Array.from(customerSelect.options).some(o => o.value === currentValue)) {
+                customerSelect.value = currentValue;
             }
-        } else {
-            box.style.display = 'none';
-            prevBalanceInput.value = "0";
         }
-        calculate();
-    });
 
-    // Main Calculation Engine using casting, ratti, ratti rate, and mazdori weights
-    function calculate() {
-        const casting = parseFloat(document.getElementById('casting_weight').value) || 0;
-        const ratti = parseFloat(document.getElementById('ratti').value) || 0;
-        const rattiRate = parseFloat(document.getElementById('ratti_rate').value) || 0;
-        const rpMazdoriWeight = parseFloat(document.getElementById('rp_mazdori_weight').value) || 0;
-        const rpMazdoriRate = parseFloat(document.getElementById('rp_mazdori_rate').value) || 0;
-        const castMaz = parseFloat(document.getElementById('casting_mazdori_weight').value) || 0;
-        const castMazRate = parseFloat(document.getElementById('casting_mazdori_rate').value) || 0;
-        const rpRate = parseFloat(document.getElementById('rp_rate').value) || 0;
-        const previous = parseFloat(document.getElementById('previous_balance').value) || 0;
+        if (invoiceTypeSelect) {
+            invoiceTypeSelect.addEventListener('change', (e) => {
+                filterCustomers(e.target.value);
+                calculate();
+            });
+        }
 
-        const wasteWeight = rattiRate > 0 ? parseFloat((casting / 10 * rattiRate).toFixed(3)) : 0;
-        const totalWeight = parseFloat((casting - wasteWeight).toFixed(3));
-        const maleWaste = totalWeight > 0 && ratti > 0 ? parseFloat((totalWeight / 96 * ratti).toFixed(3)) : 0;
-        const goldKhalis = parseFloat((totalWeight - maleWaste).toFixed(3));
+        // Customer Selection - Fetch Opening Balance
+        customerSelect.addEventListener('change', async () => {
+            const customerId = customerSelect.value;
+            const box = document.getElementById('customer-balance-box');
+            const balanceText = document.getElementById('customer-current-balance');
+            const prevBalanceInput = document.getElementById('previous_balance');
 
-        const rpMazdoriAmount = parseFloat((rpMazdoriWeight * rpMazdoriRate).toFixed(2));
-        const castMazdoriAmount = parseFloat((castMaz * castMazRate).toFixed(2));
-        const effective = parseFloat((goldKhalis + rpMazdoriWeight + castMaz).toFixed(3));
+            if (customerId) {
+                try {
+                    const baseUrl = '{{ url("") }}';
+                    const response = await fetch(`${baseUrl}/customers/${customerId}/last-balance`);
+                    const data = await response.json();
+                    const balance = parseFloat(data.balance || 0);
 
-        let totalReceivedKhalis = 0;
-        document.querySelectorAll('.receive-khalis').forEach(el => {
-            totalReceivedKhalis += parseFloat(el.value || 0);
+                    if (prevBalanceInput) prevBalanceInput.value = balance.toFixed(3);
+                    if (box) box.style.display = 'block';
+                    if (balanceText) balanceText.innerText = balance.toFixed(3) + 'g';
+                } catch (error) {
+                    console.error('Error fetching customer balance:', error);
+                    if (prevBalanceInput) prevBalanceInput.value = "0";
+                }
+            } else {
+                if (box) box.style.display = 'none';
+                if (prevBalanceInput) prevBalanceInput.value = "0";
+            }
+            calculate();
         });
-        totalReceivedKhalis = Math.round(totalReceivedKhalis * 1000) / 1000;
+    }
 
-        const rpGoldDisplay = document.getElementById('rp-gold-value');
-        if (rpGoldDisplay) rpGoldDisplay.innerText = rpMazdoriWeight.toFixed(3);
-
-        document.getElementById('waste_weight').value = wasteWeight.toFixed(3);
-        document.getElementById('total_weight').value = totalWeight.toFixed(3);
-        document.getElementById('male_waste').value = maleWaste.toFixed(3);
-        document.getElementById('gold_khalis').value = goldKhalis.toFixed(3);
-
-        document.getElementById('live-casting').innerText = casting.toFixed(3) + 'g';
-        document.getElementById('live-ratti').innerText = ratti.toFixed(2);
-        document.getElementById('val-gold-khalis').innerText = goldKhalis.toFixed(3) + 'g';
-        document.getElementById('live-rp-maz').innerText = rpMazdoriWeight.toFixed(3) + 'g';
-        document.getElementById('live-cast-maz').innerText = castMaz.toFixed(3) + 'g';
-        document.getElementById('val-effective-gold').innerText = effective.toFixed(3) + 'g';
-        document.getElementById('live-total-received').innerText = totalReceivedKhalis.toFixed(3) + 'g';
-        document.getElementById('val-prev-balance').innerText = previous.toFixed(3) + 'g';
-
-        const totalReceivedInput = document.getElementById('total_received_khalis');
-        if (totalReceivedInput) totalReceivedInput.value = totalReceivedKhalis.toFixed(3);
-
-        const liveReceivedDeduct = document.getElementById('live-received-deduct');
-        if (liveReceivedDeduct) liveReceivedDeduct.innerText = totalReceivedKhalis.toFixed(3) + 'g';
-        const thisInvoiceEl = document.getElementById('val-this-invoice');
-        if (thisInvoiceEl) thisInvoiceEl.innerText = effective.toFixed(3) + 'g';
-        const totalGoldOutEl = document.getElementById('val-total-gold-out');
-        if (totalGoldOutEl) totalGoldOutEl.innerText = effective.toFixed(3) + 'g';
-
-        const remaining = previous + effective - totalReceivedKhalis;
-        document.getElementById('val-remaining-balance').innerText = remaining.toFixed(3) + 'g';
-        document.getElementById('box-remaining').classList.toggle('cleared', remaining <= 0);
+    // Auto-populate Ratti Rate when Ratti is entered
+    if (rattiInput && rattiRateInput) {
+        rattiInput.addEventListener('input', () => {
+            const rattiValue = parseFloat(rattiInput.value) || 0;
+            const currentRattiRate = parseFloat(rattiRateInput.value) || 0;
+            
+            if (rattiValue > 0 && currentRattiRate === 0) {
+                rattiRateInput.value = DEFAULT_RATTI_RATE.toFixed(3);
+            }
+            calculate();
+        });
     }
 
     // Attach live calculation to all inputs
-    const allInputs = document.querySelectorAll('input, select, textarea');
+    const allInputs = document.querySelectorAll('#invoice-form input, #invoice-form select, #invoice-form textarea');
     allInputs.forEach(input => {
         input.addEventListener('input', calculate);
         input.addEventListener('change', calculate);
